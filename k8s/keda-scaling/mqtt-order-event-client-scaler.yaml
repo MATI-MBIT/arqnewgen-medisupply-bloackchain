@@ -1,0 +1,23 @@
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: mqtt-order-event-client-scaler
+  namespace: medilogistic
+  labels:
+    app: mqtt-order-event-client
+    component: autoscaler
+spec:
+  scaleTargetRef:
+    name: mqtt-order-event-client-microservice
+  minReplicaCount: 1
+  maxReplicaCount: 2
+  pollingInterval: 15
+  cooldownPeriod: 150
+  triggers:
+    - type: kafka
+      metadata:
+        bootstrapServers: kafka-warehouse-controller-0.kafka-warehouse-controller-headless.mediwarehouse.svc.cluster.local:9092
+        consumerGroup: warehouse-batch-service
+        topic: warehouse-order-events
+        lagThreshold: "300"
+        offsetResetPolicy: earliest
