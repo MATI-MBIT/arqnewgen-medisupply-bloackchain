@@ -1,36 +1,42 @@
-# LoteTracing - Sistema de Trazabilidad Farmacéutica
+# LoteTracing PoC - Prueba de Concepto de Trazabilidad
 
-Este proyecto implementa un sistema de trazabilidad para productos farmacéuticos sensibles utilizando Hardhat 3 Beta, con el test runner nativo de Node.js (`node:test`) y la librería `viem` para interacciones con Ethereum.
+Este proyecto implementa una **Prueba de Concepto (PoC)** simplificada para trazabilidad de productos farmacéuticos utilizando Hardhat 3 Beta, con el test runner nativo de Node.js (`node:test`) y la librería `viem` para interacciones con Ethereum.
 
 Para aprender más sobre Hardhat 3 Beta, visita la [Guía de Inicio](https://hardhat.org/docs/getting-started#getting-started-with-hardhat-3). Para compartir feedback, únete a nuestro grupo de [Hardhat 3 Beta](https://hardhat.org/hardhat3-beta-telegram-group) en Telegram o [abre un issue](https://github.com/NomicFoundation/hardhat/issues/new) en nuestro tracker de GitHub.
 
 ## Descripción del Proyecto
 
-Este proyecto incluye:
+Esta PoC se centra en los aspectos fundamentales de la trazabilidad:
 
-- **LoteTracing Smart Contract**: Sistema completo de trazabilidad para productos farmacéuticos
-- **Gestión de Cadena de Frío**: Monitoreo automático de temperatura con sensores IoT
-- **Control de Custodia**: Transferencias seguras entre fabricante, distribuidor y farmacia
+- **LoteTracing PoC Smart Contract**: Implementación simplificada de trazabilidad
+- **Gestión de Cadena de Frío**: Monitoreo básico de temperatura por propietario
+- **Control de Custodia**: Transferencias simples entre actores de la cadena
 - **Pruebas Unitarias**: Tests en Solidity compatibles con Foundry
 - **Pruebas de Integración**: Tests en TypeScript usando [`node:test`](nodejs.org/api/test.html) y [`viem`](https://viem.sh/)
 - **Ejemplos de Despliegue**: Módulos de Ignition para diferentes redes
 
-## Características del Sistema
+## Características de la PoC
 
-### Smart Contract LoteTracing
+### Smart Contract LoteTracing PoC
 
-- **Trazabilidad Completa**: Desde fabricación hasta punto de venta
-- **Monitoreo de Temperatura**: Registro automático con sensores IoT autorizados
-- **Estados del Lote**: Creado, En Tránsito, En Almacén, Comprometido, Entregado
-- **Historial Inmutable**: Registro completo de transferencias de custodia
-- **Alertas Automáticas**: Marcado automático como comprometido si la temperatura sale del rango
+- **Trazabilidad Básica**: Seguimiento de propietario actual y estado de integridad
+- **Monitoreo de Temperatura**: Registro por propietario actual únicamente
+- **Estado Binario**: Íntegro o Comprometido (simplificado)
+- **Eventos Inmutables**: Registro de creación, transferencias y compromisos
+- **Control de Acceso**: Solo el propietario actual puede registrar temperaturas
 
 ### Actores del Sistema
 
-- **Fabricante**: Crea lotes, autoriza sensores, inicia cadena de custodia
-- **Sensores IoT**: Dispositivos autorizados para registrar temperatura
+- **Fabricante**: Crea el lote e inicia la cadena de custodia
 - **Distribuidor**: Intermediario en la cadena de suministro
 - **Farmacia**: Punto final de la cadena de distribución
+
+### Simplificaciones de la PoC
+
+- No hay sensores IoT separados (el propietario registra temperaturas)
+- Estados simplificados (solo íntegro/comprometido)
+- Sin historial detallado de lecturas (solo eventos)
+- Sin fechas de vencimiento o SKUs complejos
 
 ## Uso del Sistema
 
@@ -77,10 +83,16 @@ Configurar la clave privada usando `hardhat-keystore`:
 npx hardhat keystore set SEPOLIA_PRIVATE_KEY
 ```
 
-Desplegar en Sepolia:
+Desplegar en Sepolia usando Ignition:
 
 ```shell
 npx hardhat ignition deploy --network sepolia ignition/modules/LoteTracing.ts
+```
+
+O usar el script de despliegue simplificado:
+
+```shell
+npx hardhat run scripts/deploy-sepolia.ts --network sepolia
 ```
 
 #### Parámetros de Despliegue Personalizados
@@ -90,11 +102,9 @@ Puedes personalizar los parámetros del lote durante el despliegue:
 ```shell
 npx hardhat ignition deploy ignition/modules/LoteTracing.ts --parameters '{
   "LoteTracingModule": {
-    "sku": "INSULIN-001",
-    "loteId": "LOT-2024-001", 
+    "loteId": "LOT-2024-001",
     "temperaturaMinima": 2,
-    "temperaturaMaxima": 8,
-    "sensorAddress": "0x742d35Cc6634C0532925a3b8D4C9db96c4b4d4d4"
+    "temperaturaMaxima": 8
   }
 }'
 ```
@@ -104,36 +114,72 @@ npx hardhat ignition deploy ignition/modules/LoteTracing.ts --parameters '{
 ### 1. Crear un Nuevo Lote
 
 ```typescript
-const lote = await viem.deployContract("LoteDeProductoTrazable", [
-  "INSULIN-001",           // SKU
-  "LOT-2024-001",         // Lote ID
-  fechaVencimiento,       // Timestamp de vencimiento
-  2,                      // Temperatura mínima (°C)
-  8                       // Temperatura máxima (°C)
+const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+  "LOT-2024-001", // Lote ID
+  2, // Temperatura mínima (°C)
+  8, // Temperatura máxima (°C)
 ]);
 ```
 
-### 2. Autorizar Sensor IoT
+### 2. Registrar Temperatura
 
 ```typescript
-await lote.write.gestionarSensor([sensorAddress, true], { client: fabricante });
+await lote.write.registrarTemperatura([5]); // Solo el propietario actual
 ```
 
-### 3. Registrar Temperatura
+### 3. Transferir Custodia
 
 ```typescript
-await lote.write.registrarTemperatura([5], { client: sensor });
+await lote.write.transferirCustodia([nuevoPropietarioAddress]);
 ```
 
-### 4. Transferir Custodia
+### 4. Consultar Estado
 
 ```typescript
-await lote.write.transferirCustodia([distribuidorAddress], { client: fabricante });
+const comprometido = await lote.read.comprometido();
+const propietario = await lote.read.propietarioActual();
+const fabricante = await lote.read.fabricante();
 ```
 
-### 5. Consultar Historial
+## Arquitectura Simplificada
 
-```typescript
-const historial = await lote.read.obtenerHistorialCustodia();
-const lecturas = await lote.read.obtenerLecturasTemperatura();
+```text
+┌─────────────┐    registrarTemperatura()   ┌─────────────────┐
+│ Fabricante  │ ──────────────────────────► │ Smart Contract  │
+└─────────────┘                             │ LoteTracing PoC │
+                                            └─────────────────┘
+┌─────────────┐    transferirCustodia()             │
+│ Distribuidor│ ◄───────────────────────────────────┘
+└─────────────┘                                     │
+                                                    │
+┌─────────────┐    registrarTemperatura()           │
+│ Farmacia    │ ◄───────────────────────────────────┘
+└─────────────┘
 ```
+
+## Eventos del Contrato
+
+- `LoteCreado`: Emitido al crear un nuevo lote
+- `CustodiaTransferida`: Emitido al transferir la custodia
+- `LoteComprometido`: Emitido cuando la temperatura sale del rango permitido
+
+## Limitaciones de la PoC
+
+Esta es una implementación simplificada para demostrar conceptos básicos:
+
+- **Sin persistencia de lecturas**: Solo se almacena el estado comprometido
+- **Sin sensores IoT**: El propietario registra manualmente las temperaturas
+- **Sin historial detallado**: Solo eventos para trazabilidad básica
+- **Estados binarios**: Solo íntegro o comprometido
+- **Sin validaciones complejas**: Implementación mínima para PoC
+
+## Próximos Pasos
+
+Para una implementación completa se podría considerar:
+
+- Integración con sensores IoT reales
+- Historial detallado de lecturas de temperatura
+- Estados más granulares del lote
+- Integración con sistemas de gestión de inventario
+- Interfaz web para visualización de datos
+- Notificaciones automáticas por compromisos

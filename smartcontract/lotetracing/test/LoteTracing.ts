@@ -3,175 +3,103 @@ import { describe, it } from "node:test";
 
 import { network } from "hardhat";
 
-describe("LoteTracing", async function () {
+describe("LoteTracing PoC", async function () {
   const { viem } = await network.connect();
   const publicClient = await viem.getPublicClient();
 
   // Test addresses
-  const [fabricante, sensor1, distribuidor, farmacia] = await viem.getWalletClients();
+  const [fabricante, distribuidor, farmacia] = await viem.getWalletClients();
 
   // Contract parameters
-  const SKU = "MED-001";
   const LOTE_ID = "LOT-2024-001";
   const TEMP_MIN = 2;
   const TEMP_MAX = 8;
 
   it("Should deploy and initialize correctly", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
-    const sku = await lote.read.sku();
     const loteId = await lote.read.loteId();
     const fabricanteAddr = await lote.read.fabricante();
     const propietarioActual = await lote.read.propietarioActual();
+    const comprometido = await lote.read.comprometido();
 
-    assert.equal(sku, SKU);
     assert.equal(loteId, LOTE_ID);
     assert.equal(fabricanteAddr.toLowerCase(), fabricante.account.address.toLowerCase());
     assert.equal(propietarioActual.toLowerCase(), fabricante.account.address.toLowerCase());
+    assert.equal(comprometido, false);
   });
 
-  it("Should manage sensors correctly", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+  it("Should register valid temperature correctly", async function () {
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
-    // Authorize sensor
-    await lote.write.gestionarSensor([sensor1.account.address, true]);
-    
-    const isAuthorized = await lote.read.sensoresAutorizados([sensor1.account.address]);
-    assert.equal(isAuthorized, true);
-
-    // Deauthorize sensor
-    await lote.write.gestionarSensor([sensor1.account.address, false]);
-    
-    const isStillAuthorized = await lote.read.sensoresAutorizados([sensor1.account.address]);
-    assert.equal(isStillAuthorized, false);
-  });
-
-  it("Should register temperature correctly", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
-      LOTE_ID,
-      fechaVencimiento,
-      TEMP_MIN,
-      TEMP_MAX
-    ]);
-
-    // Authorize sensor (using fabricante client since they deployed the contract)
-    await lote.write.gestionarSensor([sensor1.account.address, true]);
-
-    // Register temperature (using sensor1 client)
+    // Register valid temperature
     const temperatura = 5;
-    await sensor1.writeContract({
-      address: lote.address,
-      abi: lote.abi,
-      functionName: "registrarTemperatura",
-      args: [temperatura]
-    });
+    await lote.write.registrarTemperatura([temperatura]);
 
-    const lecturas = await lote.read.obtenerLecturasTemperatura() as any[];
-    assert.equal(lecturas.length, 1);
-    assert.equal(lecturas[0].temperatura, temperatura);
-    assert.equal(lecturas[0].idSensor.toLowerCase(), sensor1.account.address.toLowerCase());
+    const comprometido = await lote.read.comprometido();
+    assert.equal(comprometido, false);
   });
 
   it("Should mark lot as compromised when temperature is out of range", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
-    // Authorize sensor
-    await lote.write.gestionarSensor([sensor1.account.address, true]);
-
-    // Register temperature out of range (using sensor1 client)
+    // Register temperature out of range
     const temperaturaAlta = 15; // Above TEMP_MAX (8)
-    await sensor1.writeContract({
-      address: lote.address,
-      abi: lote.abi,
-      functionName: "registrarTemperatura",
-      args: [temperaturaAlta]
-    });
+    await lote.write.registrarTemperatura([temperaturaAlta]);
 
-    const estado = await lote.read.estado();
-    assert.equal(estado, 3); // EstadoLote.Comprometido
+    const comprometido = await lote.read.comprometido();
+    assert.equal(comprometido, true);
   });
 
   it("Should transfer custody correctly", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
     // Transfer to distributor
     await lote.write.transferirCustodia([distribuidor.account.address]);
 
     const nuevoPropietario = await lote.read.propietarioActual();
-    const estado = await lote.read.estado();
-    
     assert.equal(nuevoPropietario.toLowerCase(), distribuidor.account.address.toLowerCase());
-    assert.equal(estado, 1); // EstadoLote.EnTransito
-
-    // Check custody history
-    const historial = await lote.read.obtenerHistorialCustodia() as any[];
-    assert.equal(historial.length, 2);
-    assert.equal(historial[1].propietario.toLowerCase(), distribuidor.account.address.toLowerCase());
   });
 
   it("Should complete full traceability cycle", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    const deploymentBlockNumber = await publicClient.getBlockNumber();
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
-    // 1. Authorize sensor
-    await lote.write.gestionarSensor([sensor1.account.address, true]);
+    // 1. Register valid temperatures as fabricante
+    await lote.write.registrarTemperatura([4]);
+    await lote.write.registrarTemperatura([6]);
 
-    // 2. Register multiple temperature readings (using sensor1 client)
-    const temperaturas = [4, 5, 6, 7];
-    for (const temp of temperaturas) {
-      await sensor1.writeContract({
-        address: lote.address,
-        abi: lote.abi,
-        functionName: "registrarTemperatura",
-        args: [temp]
-      });
-    }
-
-    // 3. Transfer custody: Fabricante -> Distribuidor -> Farmacia
+    // 2. Transfer custody: Fabricante -> Distribuidor
     await lote.write.transferirCustodia([distribuidor.account.address]);
+
+    // 3. Register temperature as distribuidor
+    await distribuidor.writeContract({
+      address: lote.address,
+      abi: lote.abi,
+      functionName: "registrarTemperatura",
+      args: [5]
+    });
+
+    // 4. Transfer custody: Distribuidor -> Farmacia
     await distribuidor.writeContract({
       address: lote.address,
       abi: lote.abi,
@@ -181,47 +109,102 @@ describe("LoteTracing", async function () {
 
     // Verify final state
     const propietarioFinal = await lote.read.propietarioActual();
-    const estadoFinal = await lote.read.estado();
-    const lecturas = await lote.read.obtenerLecturasTemperatura() as any[];
-    const historial = await lote.read.obtenerHistorialCustodia() as any[];
+    const comprometido = await lote.read.comprometido();
 
     assert.equal(propietarioFinal.toLowerCase(), farmacia.account.address.toLowerCase());
-    assert.equal(estadoFinal, 2); // EstadoLote.EnAlmacen
-    assert.equal(lecturas.length, temperaturas.length);
-    assert.equal(historial.length, 3); // Fabricante, Distribuidor, Farmacia
-
-    // Verify all temperature events were emitted
-    const events = await publicClient.getContractEvents({
-      address: lote.address,
-      abi: lote.abi,
-      eventName: "TemperaturaRegistrada",
-      fromBlock: deploymentBlockNumber,
-      strict: true,
-    });
-
-    assert.equal(events.length, temperaturas.length);
+    assert.equal(comprometido, false);
   });
 
   it("Should reject unauthorized operations", async function () {
-    const fechaVencimiento = BigInt(Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60);
-    
-    const lote = await viem.deployContract("LoteDeProductoTrazable", [
-      SKU,
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
       LOTE_ID,
-      fechaVencimiento,
       TEMP_MIN,
-      TEMP_MAX
+      TEMP_MAX,
     ]);
 
-    // Try to register temperature from unauthorized sensor
+    // Try to register temperature from non-owner
     await assert.rejects(
-      sensor1.writeContract({
+      distribuidor.writeContract({
         address: lote.address,
         abi: lote.abi,
         functionName: "registrarTemperatura",
         args: [5]
       }),
-      /El sensor no esta autorizado/
+      /Accion solo permitida para el propietario actual/
     );
+
+    // Try to transfer custody from non-owner
+    await assert.rejects(
+      distribuidor.writeContract({
+        address: lote.address,
+        abi: lote.abi,
+        functionName: "transferirCustodia",
+        args: [farmacia.account.address]
+      }),
+      /Accion solo permitida para el propietario actual/
+    );
+  });
+
+  it("Should prevent temperature registration on compromised lot", async function () {
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Compromise the lot
+    await lote.write.registrarTemperatura([15]); // Out of range
+
+    const comprometido = await lote.read.comprometido();
+    assert.equal(comprometido, true);
+
+    // Try to register another temperature
+    await assert.rejects(
+      lote.write.registrarTemperatura([5]),
+      /El lote ya esta comprometido/
+    );
+  });
+
+  it("Should emit events correctly", async function () {
+    const deploymentBlockNumber = await publicClient.getBlockNumber();
+    
+    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Transfer custody to trigger event
+    await lote.write.transferirCustodia([distribuidor.account.address]);
+
+    // Register out-of-range temperature to trigger compromised event
+    await distribuidor.writeContract({
+      address: lote.address,
+      abi: lote.abi,
+      functionName: "registrarTemperatura",
+      args: [15]
+    });
+
+    // Check for custody transfer event
+    const custodyEvents = await publicClient.getContractEvents({
+      address: lote.address,
+      abi: lote.abi,
+      eventName: "CustodiaTransferida",
+      fromBlock: deploymentBlockNumber,
+      strict: true,
+    });
+
+    assert.equal(custodyEvents.length, 1);
+
+    // Check for compromised event
+    const compromisedEvents = await publicClient.getContractEvents({
+      address: lote.address,
+      abi: lote.abi,
+      eventName: "LoteComprometido",
+      fromBlock: deploymentBlockNumber,
+      strict: true,
+    });
+
+    assert.equal(compromisedEvents.length, 1);
   });
 });
