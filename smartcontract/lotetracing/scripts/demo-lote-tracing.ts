@@ -56,7 +56,7 @@ console.log(`- Temperatura máxima: ${TEMP_MAX}°C\n`);
 
 // 1. Deploy contract (fabricante creates the lot)
 console.log("1. 📦 Fabricante crea el lote...");
-const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+const lote = await viem.deployContract("LoteTracing", [
   LOTE_ID,
   TEMP_MIN,
   TEMP_MAX,

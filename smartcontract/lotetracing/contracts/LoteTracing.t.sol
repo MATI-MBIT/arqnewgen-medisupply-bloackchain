@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
-import {LoteDeProductoTrazablePoC} from "./LoteTracing.sol";
+import {LoteTracing} from "./LoteTracing.sol";
 import {Test} from "forge-std/Test.sol";
 
 contract LoteTracingTest is Test {
-    LoteDeProductoTrazablePoC lote;
+    LoteTracing lote;
     
     address fabricante = address(0x1);
     address distribuidor = address(0x2);
@@ -17,7 +17,7 @@ contract LoteTracingTest is Test {
 
     function setUp() public {
         vm.prank(fabricante);
-        lote = new LoteDeProductoTrazablePoC(
+        lote = new LoteTracing(
             LOTE_ID,
             TEMP_MIN,
             TEMP_MAX

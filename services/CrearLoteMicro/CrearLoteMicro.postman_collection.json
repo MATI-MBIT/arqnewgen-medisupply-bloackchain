@@ -1,0 +1,1006 @@
+{
+	"info": {
+		"_postman_id": "33555fe8-eb96-4932-a1dd-db19afbef88c",
+		"name": "CrearLoteMicro API",
+		"description": "Colección completa de endpoints para el microservicio CrearLoteMicro que interactúa con el contrato LoteTracing en Sepolia. Incluye funcionalidades para crear lotes, registrar temperaturas, transferir custodia, obtener historial blockchain, diagnóstico de contratos y utilidades de decodificación.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "1412819"
+	},
+	"item": [
+		{
+			"name": "Health Check",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has success field\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('success');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/health",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"health"
+					]
+				},
+				"description": "Endpoint para verificar el estado del microservicio"
+			},
+			"response": [
+				{
+					"name": "Health Check Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/health",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"health"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"CrearLoteMicro está funcionando correctamente\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Debug - Verificar Conexión",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has blockchain info\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('blockNumber');",
+							"    pm.expect(jsonData.data).to.have.property('chainId');",
+							"    pm.expect(jsonData.data.chainId).to.equal('11155111');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/debug/conexion",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"debug",
+						"conexion"
+					]
+				},
+				"description": "Endpoint para verificar la conexión a la red Sepolia y obtener información de la blockchain"
+			},
+			"response": [
+				{
+					"name": "Debug Conexión Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/debug/conexion",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"debug",
+								"conexion"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Conexión a Sepolia exitosa\",\n    \"data\": {\n        \"blockNumber\": 4567890,\n        \"chainId\": \"11155111\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Debug - Diagnosticar Contrato",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has diagnostic info\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('contractAddress');",
+							"    pm.expect(jsonData.data).to.have.property('hasCode');",
+							"    pm.expect(jsonData.data).to.have.property('currentBlock');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/debug/contrato/{{contract_address}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"debug",
+						"contrato",
+						"{{contract_address}}"
+					]
+				},
+				"description": "Endpoint para diagnosticar el estado completo de un contrato: código, balance, nonce, llamadas a funciones y actividad reciente"
+			},
+			"response": [
+				{
+					"name": "Diagnosticar Contrato Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/debug/contrato/0x1234567890123456789012345678901234567890",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"debug",
+								"contrato",
+								"0x1234567890123456789012345678901234567890"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Diagnóstico del contrato completado\",\n    \"data\": {\n        \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n        \"currentBlock\": 4567890,\n        \"hasCode\": true,\n        \"codeLength\": 2048,\n        \"codeHash\": \"0xabcdef123456...\",\n        \"balance\": \"0\",\n        \"nonce\": 1,\n        \"contractCalls\": {\n            \"loteId_success\": true,\n            \"loteId_value\": \"LOTE_MEDICAMENTO_001\",\n            \"fabricante_success\": true,\n            \"fabricante_value\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\"\n        },\n        \"recentActivity\": {\n            \"recentLogs\": 3,\n            \"latestLogBlock\": 4567920,\n            \"latestLogTxHash\": \"0xdef456789...\"\n        }\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Crear Lote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has contract address\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('contractAddress');",
+							"    pm.expect(jsonData.data).to.have.property('txHash');",
+							"    ",
+							"    // Guardar la dirección del contrato para usar en otros requests",
+							"    pm.environment.set('contract_address', jsonData.data.contractAddress);",
+							"    pm.environment.set('tx_hash', jsonData.data.txHash);",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"loteId\": \"LOTE_MEDICAMENTO_001\",\n    \"temperaturaMin\": 2,\n    \"temperaturaMax\": 8,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/crear",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"crear"
+					]
+				},
+				"description": "Crea un nuevo lote desplegando un contrato LoteTracing en Sepolia. Requiere loteId, temperaturas mínima y máxima, dirección de wallet y clave privada."
+			},
+			"response": [
+				{
+					"name": "Crear Lote Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"loteId\": \"LOTE_MEDICAMENTO_001\",\n    \"temperaturaMin\": 2,\n    \"temperaturaMax\": 8,\n    \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n    \"privateKey\": \"0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/lote/crear",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"lote",
+								"crear"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Lote creado exitosamente\",\n    \"data\": {\n        \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n        \"txHash\": \"0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\",\n        \"loteId\": \"LOTE_MEDICAMENTO_001\"\n    },\n    \"txHash\": \"0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Registrar Temperatura",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has transaction hash\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('txHash');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"temperatura\": 5,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/temperatura",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"temperatura"
+					]
+				},
+				"description": "Registra una lectura de temperatura en un lote existente. Si la temperatura está fuera del rango permitido, el lote se marcará como comprometido."
+			},
+			"response": [
+				{
+					"name": "Registrar Temperatura Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n    \"temperatura\": 5,\n    \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n    \"privateKey\": \"0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/lote/temperatura",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"lote",
+								"temperatura"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Temperatura registrada exitosamente\",\n    \"txHash\": \"0xdef456789012345678901234567890123456789012345678901234567890abcd\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Registrar Temperatura Fuera de Rango",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response indicates temperature out of range\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('txHash');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"temperatura\": 15,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/temperatura",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"temperatura"
+					]
+				},
+				"description": "Ejemplo de registro de temperatura fuera del rango permitido (15°C cuando el máximo es 8°C). Esto marcará el lote como comprometido."
+			},
+			"response": []
+		},
+		{
+			"name": "Obtener Información del Lote",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has lote information\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('loteId');",
+							"    pm.expect(jsonData.data).to.have.property('fabricante');",
+							"    pm.expect(jsonData.data).to.have.property('propietarioActual');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/info/{{contract_address}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"info",
+						"{{contract_address}}"
+					]
+				},
+				"description": "Obtiene toda la información de un lote existente mediante la dirección del contrato. No requiere autenticación ya que consulta datos públicos del contrato."
+			},
+			"response": [
+				{
+					"name": "Obtener Información Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/lote/info/0x1234567890123456789012345678901234567890",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"lote",
+								"info",
+								"0x1234567890123456789012345678901234567890"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Información del lote obtenida exitosamente\",\n    \"data\": {\n        \"loteId\": \"LOTE_MEDICAMENTO_001\",\n        \"fabricante\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n        \"propietarioActual\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n        \"temperaturaMinima\": 2,\n        \"temperaturaMaxima\": 8,\n        \"comprometido\": false,\n        \"contractAddress\": \"0x1234567890123456789012345678901234567890\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Transferir Custodia",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has transaction hash\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('txHash');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"nuevoPropietario\": \"0x8ba1f109551bD432803012645Hac136c22C177c9\",\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/transferir",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"transferir"
+					]
+				},
+				"description": "Transfiere la custodia de un lote a un nuevo propietario. Solo el propietario actual puede realizar esta operación."
+			},
+			"response": [
+				{
+					"name": "Transferir Custodia Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n    \"nuevoPropietario\": \"0x8ba1f109551bD432803012645Hac136c22C177c9\",\n    \"walletAddress\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n    \"privateKey\": \"0x4c0883a69102937d6231471b5dbb6204fe5129617082792ae468d01a3f362318\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/lote/transferir",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"lote",
+								"transferir"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Custodia transferida exitosamente\",\n    \"txHash\": \"0x789abc123456789abc123456789abc123456789abc123456789abc123456789a\"\n}"
+				}
+			]
+		},
+		{
+			"name": "Obtener Cadena Blockchain",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has blockchain chain data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('contractAddress');",
+							"    pm.expect(jsonData.data).to.have.property('loteId');",
+							"    pm.expect(jsonData.data).to.have.property('totalEventos');",
+							"    pm.expect(jsonData.data).to.have.property('eventos');",
+							"    pm.expect(jsonData.data.eventos).to.be.an('array');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"    ",
+							"    // Verificar que cada evento tenga la estructura correcta",
+							"    if (jsonData.data.eventos.length > 0) {",
+							"        var evento = jsonData.data.eventos[0];",
+							"        pm.expect(evento).to.have.property('tipoEvento');",
+							"        pm.expect(evento).to.have.property('blockNumber');",
+							"        pm.expect(evento).to.have.property('txHash');",
+							"        pm.expect(evento).to.have.property('timestamp');",
+							"        pm.expect(evento).to.have.property('datos');",
+							"    }",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/lote/cadena/{{contract_address}}",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"lote",
+						"cadena",
+						"{{contract_address}}"
+					]
+				},
+				"description": "Obtiene el historial completo de eventos (cadena blockchain) de un contrato LoteTracing. Incluye todos los eventos desde la creación del lote hasta el momento actual: LoteCreado, CustodiaTransferida, y LoteComprometido."
+			},
+			"response": [
+				{
+					"name": "Obtener Cadena Blockchain Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/lote/cadena/0x1234567890123456789012345678901234567890",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"lote",
+								"cadena",
+								"0x1234567890123456789012345678901234567890"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Cadena blockchain obtenida exitosamente\",\n    \"data\": {\n        \"contractAddress\": \"0x1234567890123456789012345678901234567890\",\n        \"loteId\": \"LOTE_MEDICAMENTO_001\",\n        \"totalEventos\": 3,\n        \"eventos\": [\n            {\n                \"tipoEvento\": \"LoteCreado\",\n                \"blockNumber\": 4567890,\n                \"txHash\": \"0xabc123def456789abc123def456789abc123def456789abc123def456789abc123\",\n                \"timestamp\": 1640995200,\n                \"datos\": {\n                    \"loteId\": \"LOTE_MEDICAMENTO_001\",\n                    \"fabricante\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n                    \"temperaturaMinima\": 2,\n                    \"temperaturaMaxima\": 8\n                }\n            },\n            {\n                \"tipoEvento\": \"CustodiaTransferida\",\n                \"blockNumber\": 4567920,\n                \"txHash\": \"0xdef456789abc123def456789abc123def456789abc123def456789abc123def456\",\n                \"timestamp\": 1640995800,\n                \"datos\": {\n                    \"propietarioAnterior\": \"0x742d35Cc6634C0532925a3b8D4C9db96590c6C87\",\n                    \"nuevoPropietario\": \"0x8ba1f109551bD432803012645Hac136c22C177c9\"\n                }\n            },\n            {\n                \"tipoEvento\": \"LoteComprometido\",\n                \"blockNumber\": 4567950,\n                \"txHash\": \"0x789ghi123abc456def789ghi123abc456def789ghi123abc456def789ghi123abc\",\n                \"timestamp\": 1640996400,\n                \"datos\": {\n                    \"temperaturaRegistrada\": 15,\n                    \"motivo\": \"Temperatura fuera de rango\"\n                }\n            }\n        ]\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Utils - Decodificar Input Data",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has decoded data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('functionName');",
+							"    pm.expect(jsonData.data).to.have.property('functionSig');",
+							"    pm.expect(jsonData.data).to.have.property('parameters');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"inputData\": \"0xf7b5b4e90000000000000000000000000000000000000000000000000000000000000006\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{base_url}}/api/v1/utils/decode",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"utils",
+						"decode"
+					]
+				},
+				"description": "Decodifica el input data de una transacción Ethereum usando el ABI del contrato LoteTracing"
+			},
+			"response": [
+				{
+					"name": "Decodificar Input Data Success",
+					"originalRequest": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"inputData\": \"0xf7b5b4e90000000000000000000000000000000000000000000000000000000000000006\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/api/v1/utils/decode",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"utils",
+								"decode"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Input data decodificado exitosamente\",\n    \"data\": {\n        \"functionName\": \"registrarTemperatura\",\n        \"functionSig\": \"registrarTemperatura(int8)\",\n        \"parameters\": {\n            \"_temperatura\": \"6\"\n        },\n        \"rawInputData\": \"0xf7b5b4e90000000000000000000000000000000000000000000000000000000000000006\"\n    }\n}"
+				}
+			]
+		},
+		{
+			"name": "Utils - Decodificar Input Data Específico",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has decoded specific data\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.data).to.have.property('functionName');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/utils/decode/specific",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"utils",
+						"decode",
+						"specific"
+					]
+				},
+				"description": "Decodifica el input data específico: 0xf7b5b4e90000000000000000000000000000000000000000000000000000000000000006"
+			},
+			"response": []
+		},
+		{
+			"name": "Utils - Obtener Signatures de Funciones",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code is 200\", function () {",
+							"    pm.response.to.have.status(200);",
+							"});",
+							"",
+							"pm.test(\"Response has function signatures\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.expect(jsonData).to.have.property('data');",
+							"    pm.expect(jsonData.success).to.be.true;",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{base_url}}/api/v1/utils/signatures",
+					"host": [
+						"{{base_url}}"
+					],
+					"path": [
+						"api",
+						"v1",
+						"utils",
+						"signatures"
+					]
+				},
+				"description": "Obtiene todas las signatures de funciones del contrato LoteTracing con sus selectores"
+			},
+			"response": [
+				{
+					"name": "Obtener Signatures Success",
+					"originalRequest": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/api/v1/utils/signatures",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"utils",
+								"signatures"
+							]
+						}
+					},
+					"status": "OK",
+					"code": 200,
+					"_postman_previewlanguage": "json",
+					"header": [
+						{
+							"key": "Content-Type",
+							"value": "application/json"
+						}
+					],
+					"cookie": [],
+					"body": "{\n    \"success\": true,\n    \"message\": \"Signatures de funciones obtenidas exitosamente\",\n    \"data\": {\n        \"f7b5b4e9\": \"registrarTemperatura(registrarTemperatura(int8))\",\n        \"8da5cb5b\": \"propietarioActual(propietarioActual())\",\n        \"a2fb1175\": \"loteId(loteId())\",\n        \"b88d4fde\": \"transferirCustodia(transferirCustodia(address))\"\n    }\n}"
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": "contract_address",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "tx_hash",
+			"value": "",
+			"type": "string"
+		}
+	]
+}

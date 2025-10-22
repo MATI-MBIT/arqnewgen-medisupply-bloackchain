@@ -3,12 +3,12 @@
 pragma solidity ^0.8.28;
 
 /**
- * @title LoteDeProductoTrazablePoC
+ * @title LoteTracing
  * @author AI Assistant for MediSupply
  * @notice Prueba de Concepto para la trazabilidad de un lote de producto,
  * centrada en la integridad de la cadena de frío y la transferencia de custodia.
  */
-contract LoteDeProductoTrazablePoC {
+contract LoteTracing {
 
     //==============================================================
     // VARIABLES DE ESTADO

@@ -16,7 +16,7 @@ describe("LoteTracing PoC", async function () {
   const TEMP_MAX = 8;
 
   it("Should deploy and initialize correctly", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -34,7 +34,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should register valid temperature correctly", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -49,7 +49,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should mark lot as compromised when temperature is out of range", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -64,7 +64,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should transfer custody correctly", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -78,7 +78,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should complete full traceability cycle", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -116,7 +116,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should reject unauthorized operations", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -146,7 +146,7 @@ describe("LoteTracing PoC", async function () {
   });
 
   it("Should prevent temperature registration on compromised lot", async function () {
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
@@ -168,7 +168,7 @@ describe("LoteTracing PoC", async function () {
   it("Should emit events correctly", async function () {
     const deploymentBlockNumber = await publicClient.getBlockNumber();
     
-    const lote = await viem.deployContract("LoteDeProductoTrazablePoC", [
+    const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,

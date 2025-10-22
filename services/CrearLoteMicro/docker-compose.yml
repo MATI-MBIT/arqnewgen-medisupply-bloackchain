@@ -1,0 +1,35 @@
+services:
+  crearlotemicro:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: crearlotemicro
+    ports:
+      - "8080:8080"
+    environment:
+      - SEPOLIA_RPC=${SEPOLIA_RPC:-}
+      - PORT=8080
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:8080/api/v1/health",
+          "||",
+          "exit",
+          "1",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - crearlotemicro-network
+
+networks:
+  crearlotemicro-network:
+    driver: bridge
