@@ -70,11 +70,9 @@ console.log("2. 🌡️  Fabricante registra temperaturas durante fabricación..
 const temperaturasIniciales = [4, 5, 6, 5, 4];
 for (let i = 0; i < temperaturasIniciales.length; i++) {
   const temp = temperaturasIniciales[i];
-  await lote.write.registrarTemperatura([temp]);
+  const hash = await lote.write.registrarTemperatura([temp]);
+  await publicClient.waitForTransactionReceipt({ hash });
   console.log(`   📊 Temperatura registrada: ${temp}°C`);
-
-  // Simulate time passing
-  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 const comprometidoFabricacion = await lote.read.comprometido();
@@ -86,7 +84,8 @@ console.log(
 
 // 3. Transfer to distributor
 console.log("3. 🚚 Transferencia a distribuidor...");
-await lote.write.transferirCustodia([distribuidor.account.address]);
+const transferHash = await lote.write.transferirCustodia([distribuidor.account.address]);
+await publicClient.waitForTransactionReceipt({ hash: transferHash });
 const propietarioActual = await lote.read.propietarioActual();
 console.log(`   ✅ Custodia transferida a: ${propietarioActual}`);
 
@@ -97,15 +96,14 @@ console.log(
 const temperaturasTransporte = [6, 7, 8, 7, 6];
 for (let i = 0; i < temperaturasTransporte.length; i++) {
   const temp = temperaturasTransporte[i];
-  await distribuidor.writeContract({
+  const hash = await distribuidor.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
     args: [temp],
   });
+  await publicClient.waitForTransactionReceipt({ hash });
   console.log(`   📊 Temperatura en tránsito: ${temp}°C`);
-
-  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 const comprometidoTransporte = await lote.read.comprometido();
@@ -117,12 +115,13 @@ console.log(
 
 // 5. Transfer to pharmacy
 console.log("5. 🏥 Transferencia a farmacia...");
-await distribuidor.writeContract({
+const transferHash2 = await distribuidor.writeContract({
   address: lote.address,
   abi: lote.abi,
   functionName: "transferirCustodia",
   args: [farmacia.account.address],
 });
+await publicClient.waitForTransactionReceipt({ hash: transferHash2 });
 const propietarioFinal = await lote.read.propietarioActual();
 console.log(`   ✅ Custodia transferida a: ${propietarioFinal}`);
 
@@ -131,15 +130,14 @@ console.log("\n6. 🌡️  Farmacia registra temperaturas de almacenamiento...")
 const temperaturasFarmacia = [4, 3, 4, 5];
 for (let i = 0; i < temperaturasFarmacia.length; i++) {
   const temp = temperaturasFarmacia[i];
-  await farmacia.writeContract({
+  const hash = await farmacia.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
     args: [temp],
   });
+  await publicClient.waitForTransactionReceipt({ hash });
   console.log(`   📊 Temperatura en farmacia: ${temp}°C`);
-
-  await new Promise((resolve) => setTimeout(resolve, 100));
 }
 
 // 7. Get final state
@@ -158,12 +156,13 @@ console.log(`   🌡️  Rango permitido: ${TEMP_MIN}°C - ${TEMP_MAX}°C`);
 console.log("\n8. 🚨 Demostración: Registro de temperatura fuera de rango...");
 try {
   // Try to register an out-of-range temperature
-  await farmacia.writeContract({
+  const hash = await farmacia.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
     args: [15], // Way above TEMP_MAX
   });
+  await publicClient.waitForTransactionReceipt({ hash });
 
   const comprometidoFinal = await lote.read.comprometido();
   console.log(`   🌡️  Temperatura registrada: 15°C (fuera de rango)`);
@@ -174,12 +173,13 @@ try {
     "\n9. 🚫 Intento de registrar temperatura en lote comprometido..."
   );
   try {
-    await farmacia.writeContract({
+    const hash2 = await farmacia.writeContract({
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
       args: [5],
     });
+    await publicClient.waitForTransactionReceipt({ hash: hash2 });
   } catch (error) {
     console.log(`   ✅ Registro rechazado correctamente: Lote ya comprometido`);
   }
