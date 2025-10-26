@@ -7,7 +7,7 @@ export default buildModule("LoteTracingModule", (m) => {
   const temperaturaMaxima = m.getParameter("temperaturaMaxima", 8);
 
   // Deploy the LoteTracing PoC contract
-  const loteTracing = m.contract("LoteDeProductoTrazablePoC", [
+  const loteTracing = m.contract("LoteTracing", [
     loteId,
     temperaturaMinima,
     temperaturaMaxima
