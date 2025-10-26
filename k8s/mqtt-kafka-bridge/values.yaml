@@ -1,0 +1,32 @@
+replicaCount: 1
+
+image:
+  repository: python
+  tag: "3.11-slim"
+  pullPolicy: IfNotPresent
+
+mqtt:
+  broker: "emqx.medilogistic.svc.cluster.local"
+  port: 1883
+  topics:
+    - "events/sensor"
+    - "events/order-damage"
+
+kafka:
+  bootstrapServers: "kafka:9092"
+  preserveTopicNames: true
+  topicPrefix: ""
+  topicMapping:
+    "events/sensor": "events-sensor"
+    "events/order-damage": "events-order-damage"
+    # Example custom mapping:
+    # "events/sensor": "kafka-sensor-events"
+    # "events/temperature": "kafka-temp-events"
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi

@@ -1,0 +1,76 @@
+replicaCount: 1 # CRITICAL: Must be 1 to avoid duplicate processing
+
+image:
+  repository: python
+  tag: "3.11-slim"
+  pullPolicy: IfNotPresent
+
+# Kafka configuration
+kafka:
+  bootstrapServers: "kafka:9092"
+
+# RabbitMQ configuration
+rabbitmq:
+  host: "rabbitmq.mediorder.svc.cluster.local"
+  port: 5672
+  username: "user"
+  # Password will be read from Kubernetes secret
+  # Note: Secret must exist in the same namespace (medisupply) or be copied from mediorder namespace
+  secretName: "rabbitmq"
+  secretKey: "rabbitmq-password"
+  vhost: "/"
+  # Full connection URL (will be constructed with password from secret)
+  url: "amqp://user:$(RABBITMQ_PASSWORD)@rabbitmq.mediorder.svc.cluster.local:5672/"
+
+# Consumer groups (only needed for R2K, K2R uses manual assignment)
+consumerGroup:
+  # kafkaToRabbitmq: not needed (uses manual assignment)
+  rabbitmqToKafka: "kafka-rabbitmq-replicator-r2k"
+
+# Replication configuration
+replication:
+  kafkaToRabbitmq:
+    enabled: true
+    mappings:
+      - kafkaTopic: "events-order-damage"
+        rabbitmqQueue: "order-damage-queue"
+        rabbitmqExchange: "events"
+        rabbitmqExchangeType: "direct"
+        rabbitmqRoutingKey: "order.damage"
+
+  rabbitmqToKafka:
+    enabled: true
+    mappings:
+     - rabbitmqQueue: "order-events-queue"
+       kafkaTopic: "order-events"
+    #  - rabbitmqQueue: "notifications"
+    #    kafkaTopic: "notifications"
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 512Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Logging configuration
+logging:
+  level: INFO
+
+# Health check configuration
+healthCheck:
+  enabled: true
+  initialDelaySeconds: 30
+  periodSeconds: 10
+
+# Istio configuration
+istio:
+  enabled: true
+  labels:
+    app: kafka-rabbitmq-replicator
+    version: v1
