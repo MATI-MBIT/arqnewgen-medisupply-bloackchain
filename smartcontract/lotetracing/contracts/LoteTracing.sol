@@ -1,15 +1,13 @@
-
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
 
 /**
  * @title LoteTracing
- * @author AI Assistant for MediSupply
+ * @author Grupo 2 - ArqNewGen - MATI for MediSupply
  * @notice Prueba de Concepto para la trazabilidad de un lote de producto,
  * centrada en la integridad de la cadena de frío y la transferencia de custodia.
  */
 contract LoteTracing {
-
     //==============================================================
     // VARIABLES DE ESTADO
     //==============================================================
@@ -19,6 +17,8 @@ contract LoteTracing {
     address public immutable fabricante;
     int8 public immutable temperaturaMinima;
     int8 public immutable temperaturaMaxima;
+    int8 public tempRegMinima;
+    int8 public tempRegMaxima;
 
     // --- Dinámicas (Estado Actual) ---
     address public propietarioActual;
@@ -28,16 +28,33 @@ contract LoteTracing {
     // EVENTOS (El historial inmutable)
     //==============================================================
 
-    event LoteCreado(string indexed loteId, address indexed fabricante, int8 temperaturaMinima, int8 temperaturaMaxima);
-    event CustodiaTransferida(address indexed propietarioAnterior, address indexed nuevoPropietario);
-    event LoteComprometido(int8 temperaturaRegistrada, string motivo);
+    event LoteCreado(
+        string indexed loteId,
+        address indexed fabricante,
+        int8 temperaturaMinima,
+        int8 temperaturaMaxima
+    );
+    event CustodiaTransferida(
+        address indexed propietarioAnterior,
+        address indexed nuevoPropietario,
+        bool comprometido
+    );
+    event LoteComprometido(
+        address indexed propietario, 
+        int8 tempMin, 
+        int8 tempMax,
+        bool comprometido,
+        string motivo);
 
     //==============================================================
     // MODIFICADOR DE ACCESO
     //==============================================================
 
     modifier soloPropietario() {
-        require(msg.sender == propietarioActual, "Accion solo permitida para el propietario actual");
+        require(
+            msg.sender == propietarioActual,
+            "Accion solo permitida para el propietario actual"
+        );
         _;
     }
 
@@ -45,17 +62,15 @@ contract LoteTracing {
     // CONSTRUCTOR
     //==============================================================
 
-    constructor(
-        string memory _loteId,
-        int8 _tempMin,
-        int8 _tempMax
-    ) {
+    constructor(string memory _loteId, int8 _tempMin, int8 _tempMax) {
         loteId = _loteId;
         fabricante = msg.sender;
         propietarioActual = msg.sender; // El fabricante es el primer propietario
         temperaturaMinima = _tempMin;
         temperaturaMaxima = _tempMax;
         comprometido = false;
+        tempRegMinima = 0;
+        tempRegMaxima = 0;
 
         emit LoteCreado(_loteId, fabricante, _tempMin, _tempMax);
     }
@@ -68,24 +83,32 @@ contract LoteTracing {
      * @notice Registra una lectura de temperatura. Solo el propietario actual puede hacerlo.
      * Si la temperatura está fuera de rango, el lote se marca como comprometido.
      */
-    function registrarTemperatura(int8 _temperatura) external soloPropietario {
+    function registrarTemperatura(
+        int8 _temperatura,
+        int8 _tempMin,
+        int8 _tempMax
+    ) external soloPropietario {
         require(!comprometido, "El lote ya esta comprometido");
 
-        if (_temperatura < temperaturaMinima || _temperatura > temperaturaMaxima) {
+        tempRegMinima = _tempMin;
+        tempRegMaxima = _tempMax;
+        if (_temperatura < _tempMin || _temperatura > _tempMax) {
             comprometido = true;
-            emit LoteComprometido(_temperatura, "Temperatura fuera de rango");
+            emit LoteComprometido(msg.sender, _tempMin, _tempMax, comprometido, "Temperatura fuera de rango");
         }
     }
 
     /**
      * @notice Transfiere la propiedad y responsabilidad del lote a un nuevo custodio.
      */
-    function transferirCustodia(address _nuevoPropietario) external soloPropietario {
+    function transferirCustodia(
+        address _nuevoPropietario
+    ) external soloPropietario{
         require(_nuevoPropietario != address(0), "Direccion invalida");
-        
+
         address propietarioAnterior = propietarioActual;
         propietarioActual = _nuevoPropietario;
 
-        emit CustodiaTransferida(propietarioAnterior, _nuevoPropietario);
+        emit CustodiaTransferida(propietarioAnterior, _nuevoPropietario, comprometido);
     }
 }

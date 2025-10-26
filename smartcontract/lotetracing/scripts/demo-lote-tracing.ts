@@ -70,8 +70,9 @@ console.log("2. 🌡️  Fabricante registra temperaturas durante fabricación..
 const temperaturasIniciales = [4, 5, 6, 5, 4];
 for (let i = 0; i < temperaturasIniciales.length; i++) {
   const temp = temperaturasIniciales[i];
-  const hash = await lote.write.registrarTemperatura([temp]);
+  const hash = await lote.write.registrarTemperatura([temp, TEMP_MIN, TEMP_MAX]);
   await publicClient.waitForTransactionReceipt({ hash });
+
   console.log(`   📊 Temperatura registrada: ${temp}°C`);
 }
 
@@ -100,7 +101,7 @@ for (let i = 0; i < temperaturasTransporte.length; i++) {
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [temp],
+    args: [temp, TEMP_MIN, TEMP_MAX],
   });
   await publicClient.waitForTransactionReceipt({ hash });
   console.log(`   📊 Temperatura en tránsito: ${temp}°C`);
@@ -134,7 +135,7 @@ for (let i = 0; i < temperaturasFarmacia.length; i++) {
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [temp],
+    args: [temp, TEMP_MIN, TEMP_MAX],
   });
   await publicClient.waitForTransactionReceipt({ hash });
   console.log(`   📊 Temperatura en farmacia: ${temp}°C`);
@@ -160,7 +161,7 @@ try {
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [15], // Way above TEMP_MAX
+    args: [15, TEMP_MIN, TEMP_MAX], // Way above TEMP_MAX
   });
   await publicClient.waitForTransactionReceipt({ hash });
 
@@ -177,7 +178,7 @@ try {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [5],
+      args: [5, TEMP_MIN, TEMP_MAX],
     });
     await publicClient.waitForTransactionReceipt({ hash: hash2 });
   } catch (error) {

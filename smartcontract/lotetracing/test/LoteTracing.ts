@@ -42,7 +42,7 @@ describe("LoteTracing PoC", async function () {
 
     // Register valid temperature
     const temperatura = 5;
-    await lote.write.registrarTemperatura([temperatura]);
+    await lote.write.registrarTemperatura([temperatura, TEMP_MIN, TEMP_MAX]);
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, false);
@@ -57,7 +57,7 @@ describe("LoteTracing PoC", async function () {
 
     // Register temperature out of range
     const temperaturaAlta = 15; // Above TEMP_MAX (8)
-    await lote.write.registrarTemperatura([temperaturaAlta]);
+    await lote.write.registrarTemperatura([temperaturaAlta, TEMP_MIN, TEMP_MAX]);
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
@@ -85,8 +85,8 @@ describe("LoteTracing PoC", async function () {
     ]);
 
     // 1. Register valid temperatures as fabricante
-    await lote.write.registrarTemperatura([4]);
-    await lote.write.registrarTemperatura([6]);
+    await lote.write.registrarTemperatura([4, TEMP_MIN, TEMP_MAX]);
+    await lote.write.registrarTemperatura([6, TEMP_MIN, TEMP_MAX]);
 
     // 2. Transfer custody: Fabricante -> Distribuidor
     await lote.write.transferirCustodia([distribuidor.account.address]);
@@ -96,7 +96,7 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [5]
+      args: [5, TEMP_MIN, TEMP_MAX]
     });
 
     // 4. Transfer custody: Distribuidor -> Farmacia
@@ -128,7 +128,7 @@ describe("LoteTracing PoC", async function () {
         address: lote.address,
         abi: lote.abi,
         functionName: "registrarTemperatura",
-        args: [5]
+        args: [5, TEMP_MIN, TEMP_MAX]
       }),
       /Accion solo permitida para el propietario actual/
     );
@@ -153,14 +153,14 @@ describe("LoteTracing PoC", async function () {
     ]);
 
     // Compromise the lot
-    await lote.write.registrarTemperatura([15]); // Out of range
+    await lote.write.registrarTemperatura([15, TEMP_MIN, TEMP_MAX]); // Out of range
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
 
     // Try to register another temperature
     await assert.rejects(
-      lote.write.registrarTemperatura([5]),
+      lote.write.registrarTemperatura([5, TEMP_MIN, TEMP_MAX]),
       /El lote ya esta comprometido/
     );
   });
@@ -182,7 +182,7 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [15]
+      args: [15, TEMP_MIN, TEMP_MAX]
     });
 
     // Check for custody transfer event
