@@ -47,8 +47,8 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // Register valid temperature range that includes contract's range
-    await lote.write.registrarTemperatura([0, 10]); // Range 0-10 includes contract's 2-8
+    // Register valid temperature range within contract's limits
+    await lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]); // Range 2-8 is within limits
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, false);
@@ -61,8 +61,22 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // Register temperature range that doesn't include contract's range
-    await lote.write.registrarTemperatura([10, 15]); // Range 10-15 doesn't include contract's 2-8
+    // Register temperature range outside contract's limits (tempMax > 8)
+    await lote.write.registrarTemperatura([10, 15]); // Range 10-15 exceeds contract's max of 8
+
+    const comprometido = await lote.read.comprometido();
+    assert.equal(comprometido, true);
+  });
+
+  it("Should mark lot as compromised when tempMin is below limit", async function () {
+    const lote = await viem.deployContract("LoteTracing", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Register temperature range with tempMin below contract's limit (tempMin < 2)
+    await lote.write.registrarTemperatura([0, 6]); // Range 0-6, tempMin=0 < 2
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
@@ -94,7 +108,7 @@ describe("LoteTracing PoC", async function () {
 
     // 1. Register valid temperature ranges as fabricante
     await lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]);
-    await lote.write.registrarTemperatura([0, 10]);
+    await lote.write.registrarTemperatura([3, 7]); // Another valid range within limits
 
     // 2. Transfer custody: Fabricante -> Distribuidor
     await lote.write.transferirCustodia([distribuidor.account.address]);
@@ -155,7 +169,7 @@ describe("LoteTracing PoC", async function () {
     ]);
 
     // Compromise the lot with invalid range
-    await lote.write.registrarTemperatura([10, 15]); // Range doesn't include contract's 2-8
+    await lote.write.registrarTemperatura([10, 15]); // Range 10-15 exceeds contract's max of 8
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
@@ -184,7 +198,7 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [10, 15], // Range doesn't include contract's 2-8
+      args: [10, 15], // Range 10-15 exceeds contract's max of 8
     });
 
     // Check for custody transfer event
@@ -208,5 +222,39 @@ describe("LoteTracing PoC", async function () {
     });
 
     assert.equal(compromisedEvents.length, 1);
+  });
+
+  it("Should handle edge cases correctly", async function () {
+    const lote = await viem.deployContract("LoteTracing", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Test exact boundary values - should NOT compromise
+    await lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]); // Exactly 2-8
+    assert.equal(await lote.read.comprometido(), false);
+
+    // Deploy new contract for next test
+    const lote2 = await viem.deployContract("LoteTracing", [
+      LOTE_ID + "-2",
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Test just outside boundaries - should compromise (tempMin = 1 < 2)
+    await lote2.write.registrarTemperatura([1, TEMP_MAX]); // 1-8, tempMin=1 < 2
+    assert.equal(await lote2.read.comprometido(), true);
+
+    // Deploy new contract for next test
+    const lote3 = await viem.deployContract("LoteTracing", [
+      LOTE_ID + "-3",
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Test just outside boundaries - should compromise (tempMax = 9 > 8)
+    await lote3.write.registrarTemperatura([TEMP_MIN, 9]); // 2-9, tempMax=9 > 8
+    assert.equal(await lote3.read.comprometido(), true);
   });
 });
