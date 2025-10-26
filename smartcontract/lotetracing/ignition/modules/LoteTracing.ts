@@ -10,14 +10,10 @@ export default buildModule("LoteTracingModule", (m) => {
   const loteTracing = m.contract("LoteTracing", [
     loteId,
     temperaturaMinima,
-    temperaturaMaxima
+    temperaturaMaxima,
   ]);
 
-  return { 
+  return {
     loteTracing,
-    contractAddress: loteTracing,
-    loteId,
-    temperaturaMinima,
-    temperaturaMaxima
   };
 });

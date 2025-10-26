@@ -2,7 +2,8 @@ import { network } from "hardhat";
 
 console.log("=== Demo LoteTracing PoC - Trazabilidad Simplificada ===\n");
 
-const { viem } = await network.connect();
+const networkConnection = await network.connect();
+const { viem } = networkConnection as any;
 const publicClient = await viem.getPublicClient();
 
 // Get wallet clients - handle both local and testnet networks
@@ -70,7 +71,11 @@ console.log("2. 🌡️  Fabricante registra temperaturas durante fabricación..
 const temperaturasIniciales = [4, 5, 6, 5, 4];
 for (let i = 0; i < temperaturasIniciales.length; i++) {
   const temp = temperaturasIniciales[i];
-  const hash = await lote.write.registrarTemperatura([temp, TEMP_MIN, TEMP_MAX]);
+  const hash = await lote.write.registrarTemperatura([
+    temp,
+    TEMP_MIN,
+    TEMP_MAX,
+  ]);
   await publicClient.waitForTransactionReceipt({ hash });
 
   console.log(`   📊 Temperatura registrada: ${temp}°C`);
@@ -85,7 +90,9 @@ console.log(
 
 // 3. Transfer to distributor
 console.log("3. 🚚 Transferencia a distribuidor...");
-const transferHash = await lote.write.transferirCustodia([distribuidor.account.address]);
+const transferHash = await lote.write.transferirCustodia([
+  distribuidor.account.address,
+]);
 await publicClient.waitForTransactionReceipt({ hash: transferHash });
 const propietarioActual = await lote.read.propietarioActual();
 console.log(`   ✅ Custodia transferida a: ${propietarioActual}`);

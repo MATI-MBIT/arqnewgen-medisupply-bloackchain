@@ -4,7 +4,8 @@ import { describe, it } from "node:test";
 import { network } from "hardhat";
 
 describe("LoteTracing PoC", async function () {
-  const { viem } = await network.connect();
+  const networkConnection = await network.connect();
+  const { viem } = networkConnection as any;
   const publicClient = await viem.getPublicClient();
 
   // Test addresses
@@ -28,8 +29,14 @@ describe("LoteTracing PoC", async function () {
     const comprometido = await lote.read.comprometido();
 
     assert.equal(loteId, LOTE_ID);
-    assert.equal(fabricanteAddr.toLowerCase(), fabricante.account.address.toLowerCase());
-    assert.equal(propietarioActual.toLowerCase(), fabricante.account.address.toLowerCase());
+    assert.equal(
+      fabricanteAddr.toLowerCase(),
+      fabricante.account.address.toLowerCase()
+    );
+    assert.equal(
+      propietarioActual.toLowerCase(),
+      fabricante.account.address.toLowerCase()
+    );
     assert.equal(comprometido, false);
   });
 
@@ -57,7 +64,11 @@ describe("LoteTracing PoC", async function () {
 
     // Register temperature out of range
     const temperaturaAlta = 15; // Above TEMP_MAX (8)
-    await lote.write.registrarTemperatura([temperaturaAlta, TEMP_MIN, TEMP_MAX]);
+    await lote.write.registrarTemperatura([
+      temperaturaAlta,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
@@ -74,7 +85,10 @@ describe("LoteTracing PoC", async function () {
     await lote.write.transferirCustodia([distribuidor.account.address]);
 
     const nuevoPropietario = await lote.read.propietarioActual();
-    assert.equal(nuevoPropietario.toLowerCase(), distribuidor.account.address.toLowerCase());
+    assert.equal(
+      nuevoPropietario.toLowerCase(),
+      distribuidor.account.address.toLowerCase()
+    );
   });
 
   it("Should complete full traceability cycle", async function () {
@@ -96,7 +110,7 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [5, TEMP_MIN, TEMP_MAX]
+      args: [5, TEMP_MIN, TEMP_MAX],
     });
 
     // 4. Transfer custody: Distribuidor -> Farmacia
@@ -104,14 +118,17 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "transferirCustodia",
-      args: [farmacia.account.address]
+      args: [farmacia.account.address],
     });
 
     // Verify final state
     const propietarioFinal = await lote.read.propietarioActual();
     const comprometido = await lote.read.comprometido();
 
-    assert.equal(propietarioFinal.toLowerCase(), farmacia.account.address.toLowerCase());
+    assert.equal(
+      propietarioFinal.toLowerCase(),
+      farmacia.account.address.toLowerCase()
+    );
     assert.equal(comprometido, false);
   });
 
@@ -128,7 +145,7 @@ describe("LoteTracing PoC", async function () {
         address: lote.address,
         abi: lote.abi,
         functionName: "registrarTemperatura",
-        args: [5, TEMP_MIN, TEMP_MAX]
+        args: [5, TEMP_MIN, TEMP_MAX],
       }),
       /Accion solo permitida para el propietario actual/
     );
@@ -139,7 +156,7 @@ describe("LoteTracing PoC", async function () {
         address: lote.address,
         abi: lote.abi,
         functionName: "transferirCustodia",
-        args: [farmacia.account.address]
+        args: [farmacia.account.address],
       }),
       /Accion solo permitida para el propietario actual/
     );
@@ -167,7 +184,7 @@ describe("LoteTracing PoC", async function () {
 
   it("Should emit events correctly", async function () {
     const deploymentBlockNumber = await publicClient.getBlockNumber();
-    
+
     const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
@@ -182,7 +199,7 @@ describe("LoteTracing PoC", async function () {
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [15, TEMP_MIN, TEMP_MAX]
+      args: [15, TEMP_MIN, TEMP_MAX],
     });
 
     // Check for custody transfer event
