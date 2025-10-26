@@ -68,7 +68,7 @@ console.log(`   📅 Fecha de creación: ${new Date().toISOString()}\n`);
 
 // 2. Register temperature ranges during manufacturing
 console.log("2. 🌡️  Fabricante registra rangos de temperatura durante fabricación...");
-const rangosIniciales = [[TEMP_MIN, TEMP_MAX], [0, 10], [1, 9]];
+const rangosIniciales = [[TEMP_MIN, TEMP_MAX], [3, 7], [2, 6]]; // All within valid range
 for (let i = 0; i < rangosIniciales.length; i++) {
   const [min, max] = rangosIniciales[i];
   const hash = await lote.write.registrarTemperatura([min, max]);
@@ -97,7 +97,7 @@ console.log(`   ✅ Custodia transferida a: ${propietarioActual}`);
 console.log(
   "\n4. 🌡️  Distribuidor registra rangos de temperatura durante transporte..."
 );
-const rangosTransporte = [[TEMP_MIN, TEMP_MAX], [1, 10], [0, 9]];
+const rangosTransporte = [[TEMP_MIN, TEMP_MAX], [3, 8], [2, 7]]; // All within valid range
 for (let i = 0; i < rangosTransporte.length; i++) {
   const [min, max] = rangosTransporte[i];
   const hash = await distribuidor.writeContract({
@@ -131,7 +131,7 @@ console.log(`   ✅ Custodia transferida a: ${propietarioFinal}`);
 
 // 6. Final temperature ranges at pharmacy
 console.log("\n6. 🌡️  Farmacia registra rangos de temperatura de almacenamiento...");
-const rangosFarmacia = [[TEMP_MIN, TEMP_MAX], [1, 9], [0, 10]]; // All ranges must include both 2 and 8
+const rangosFarmacia = [[TEMP_MIN, TEMP_MAX], [4, 7], [3, 8]]; // All within valid range
 for (let i = 0; i < rangosFarmacia.length; i++) {
   const [min, max] = rangosFarmacia[i];
   const hash = await farmacia.writeContract({

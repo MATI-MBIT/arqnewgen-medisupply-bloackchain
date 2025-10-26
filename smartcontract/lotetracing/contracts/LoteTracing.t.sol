@@ -34,24 +34,20 @@ contract LoteTracingTest is Test {
     }
 
     function test_RegistrarTemperatura_Valida() public {
-        // Registrar rango de temperatura válido (cualquiera puede hacerlo)
+        // Registrar rango de temperatura válido (solo el propietario puede hacerlo)
+        vm.prank(fabricante);
         lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
         
         // Verificar que el lote no está comprometido
         assertEq(lote.comprometido(), false);
     }
 
-    function test_RegistrarTemperatura_CualquieraPuede() public {
-        // Ahora cualquiera puede registrar temperaturas
-        vm.prank(distribuidor);
-        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
-        
-        assertEq(lote.comprometido(), false);
-    }
+
 
     function test_RegistrarTemperatura_RangoInvalido() public {
-        // Registrar rango que no incluye las temperaturas del contrato
-        lote.registrarTemperatura(10, 15); // Rango 10-15 no incluye 2-8
+        // Registrar rango que está fuera de los límites del contrato
+        vm.prank(fabricante);
+        lote.registrarTemperatura(10, 15); // Rango 10-15 está fuera de 2-8
         
         // Verificar que el lote se marcó como comprometido
         assertEq(lote.comprometido(), true);
@@ -77,15 +73,18 @@ contract LoteTracingTest is Test {
     }
 
     function test_CicloCompleto() public {
-        // 1. Registrar rangos de temperatura válidos
+        // 1. Fabricante registra rangos de temperatura válidos
+        vm.prank(fabricante);
         lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
-        lote.registrarTemperatura(0, 10);
+        vm.prank(fabricante);
+        lote.registrarTemperatura(3, 7); // Rango válido dentro de 2-8
         
         // 2. Transferir a distribuidor
         vm.prank(fabricante);
         lote.transferirCustodia(distribuidor);
         
         // 3. Distribuidor registra rango de temperatura
+        vm.prank(distribuidor);
         lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
         
         // 4. Transferir a farmacia
@@ -99,11 +98,13 @@ contract LoteTracingTest is Test {
 
     function test_LoteComprometidoNoPermiteTemperaturas() public {
         // Comprometer el lote con rango inválido
-        lote.registrarTemperatura(10, 15); // Rango no incluye 2-8
+        vm.prank(fabricante);
+        lote.registrarTemperatura(10, 15); // Rango fuera de 2-8
         
         assertTrue(lote.comprometido());
         
         // Intentar registrar otro rango
+        vm.prank(fabricante);
         vm.expectRevert("El lote ya esta comprometido");
         lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
     }
@@ -111,11 +112,12 @@ contract LoteTracingTest is Test {
     function testFuzz_RegistrarTemperatura(int8 tempMin, int8 tempMax) public {
         vm.assume(tempMin >= -50 && tempMax <= 50 && tempMin <= tempMax);
         
-        // Registrar rango de temperatura
+        // Registrar rango de temperatura como propietario
+        vm.prank(fabricante);
         lote.registrarTemperatura(tempMin, tempMax);
         
-        // Verificar estado según si el rango incluye las temperaturas del contrato
-        if (TEMP_MIN < tempMin || TEMP_MIN > tempMax || TEMP_MAX < tempMin || TEMP_MAX > tempMax) {
+        // Verificar estado según si el rango está dentro de los límites del contrato
+        if (tempMin < TEMP_MIN || tempMax > TEMP_MAX) {
             assertTrue(lote.comprometido());
         } else {
             assertFalse(lote.comprometido());

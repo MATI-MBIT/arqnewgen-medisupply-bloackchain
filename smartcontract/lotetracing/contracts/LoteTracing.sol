@@ -89,7 +89,7 @@ contract LoteTracing {
 
         tempRegMinima = _tempMin;
         tempRegMaxima = _tempMax;
-        if (temperaturaMinima < _tempMin || temperaturaMaxima > _tempMax) {
+        if (_tempMin < temperaturaMinima || _tempMax > temperaturaMaxima) {
             comprometido = true;
             emit LoteComprometido(
                 msg.sender,

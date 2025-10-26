@@ -147,9 +147,15 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // Note: registrarTemperatura no longer requires ownership, so anyone can call it
+    // Anyone can register temperature (this is the intended behavior)
+    await distribuidor.writeContract({
+      address: lote.address,
+      abi: lote.abi,
+      functionName: "registrarTemperatura",
+      args: [TEMP_MIN, TEMP_MAX],
+    });
 
-    // Try to transfer custody from non-owner
+    // But only the owner can transfer custody
     await assert.rejects(
       distribuidor.writeContract({
         address: lote.address,
