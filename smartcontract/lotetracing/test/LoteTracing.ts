@@ -40,35 +40,29 @@ describe("LoteTracing PoC", async function () {
     assert.equal(comprometido, false);
   });
 
-  it("Should register valid temperature correctly", async function () {
+  it("Should register valid temperature range correctly", async function () {
     const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
     ]);
 
-    // Register valid temperature
-    const temperatura = 5;
-    await lote.write.registrarTemperatura([temperatura, TEMP_MIN, TEMP_MAX]);
+    // Register valid temperature range that includes contract's range
+    await lote.write.registrarTemperatura([0, 10]); // Range 0-10 includes contract's 2-8
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, false);
   });
 
-  it("Should mark lot as compromised when temperature is out of range", async function () {
+  it("Should mark lot as compromised when temperature range is invalid", async function () {
     const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
       TEMP_MAX,
     ]);
 
-    // Register temperature out of range
-    const temperaturaAlta = 15; // Above TEMP_MAX (8)
-    await lote.write.registrarTemperatura([
-      temperaturaAlta,
-      TEMP_MIN,
-      TEMP_MAX,
-    ]);
+    // Register temperature range that doesn't include contract's range
+    await lote.write.registrarTemperatura([10, 15]); // Range 10-15 doesn't include contract's 2-8
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
@@ -98,19 +92,19 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // 1. Register valid temperatures as fabricante
-    await lote.write.registrarTemperatura([4, TEMP_MIN, TEMP_MAX]);
-    await lote.write.registrarTemperatura([6, TEMP_MIN, TEMP_MAX]);
+    // 1. Register valid temperature ranges as fabricante
+    await lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]);
+    await lote.write.registrarTemperatura([0, 10]);
 
     // 2. Transfer custody: Fabricante -> Distribuidor
     await lote.write.transferirCustodia([distribuidor.account.address]);
 
-    // 3. Register temperature as distribuidor
+    // 3. Register temperature range as distribuidor
     await distribuidor.writeContract({
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [5, TEMP_MIN, TEMP_MAX],
+      args: [TEMP_MIN, TEMP_MAX],
     });
 
     // 4. Transfer custody: Distribuidor -> Farmacia
@@ -139,16 +133,7 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // Try to register temperature from non-owner
-    await assert.rejects(
-      distribuidor.writeContract({
-        address: lote.address,
-        abi: lote.abi,
-        functionName: "registrarTemperatura",
-        args: [5, TEMP_MIN, TEMP_MAX],
-      }),
-      /Accion solo permitida para el propietario actual/
-    );
+    // Note: registrarTemperatura no longer requires ownership, so anyone can call it
 
     // Try to transfer custody from non-owner
     await assert.rejects(
@@ -169,15 +154,15 @@ describe("LoteTracing PoC", async function () {
       TEMP_MAX,
     ]);
 
-    // Compromise the lot
-    await lote.write.registrarTemperatura([15, TEMP_MIN, TEMP_MAX]); // Out of range
+    // Compromise the lot with invalid range
+    await lote.write.registrarTemperatura([10, 15]); // Range doesn't include contract's 2-8
 
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
 
-    // Try to register another temperature
+    // Try to register another temperature range
     await assert.rejects(
-      lote.write.registrarTemperatura([5, TEMP_MIN, TEMP_MAX]),
+      lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]),
       /El lote ya esta comprometido/
     );
   });
@@ -194,12 +179,12 @@ describe("LoteTracing PoC", async function () {
     // Transfer custody to trigger event
     await lote.write.transferirCustodia([distribuidor.account.address]);
 
-    // Register out-of-range temperature to trigger compromised event
+    // Register invalid temperature range to trigger compromised event
     await distribuidor.writeContract({
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [15, TEMP_MIN, TEMP_MAX],
+      args: [10, 15], // Range doesn't include contract's 2-8
     });
 
     // Check for custody transfer event

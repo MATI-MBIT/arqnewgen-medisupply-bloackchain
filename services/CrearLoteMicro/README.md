@@ -59,6 +59,8 @@ Obtiene toda la información de un lote existente.
     "propietarioActual": "0x8ba1f109551bD432803012645Hac136c22C177c9",
     "temperaturaMinima": 2,
     "temperaturaMaxima": 8,
+    "tempRegMinima": 0,
+    "tempRegMaxima": 0,
     "comprometido": false,
     "contractAddress": "0x1234567890123456789012345678901234567890"
   }
@@ -94,13 +96,14 @@ Crea un nuevo lote desplegando un contrato LoteTracing.
 ```
 
 ### POST /api/v1/lote/temperatura
-Registra una temperatura en un lote existente.
+Registra un rango de temperatura en un lote existente.
 
 **Request Body:**
 ```json
 {
   "contractAddress": "0x...",
-  "temperatura": 5,
+  "tempMin": 2,
+  "tempMax": 8,
   "walletAddress": "0x...",
   "privateKey": "0x..."
 }

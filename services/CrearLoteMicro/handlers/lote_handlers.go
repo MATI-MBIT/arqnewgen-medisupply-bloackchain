@@ -93,7 +93,8 @@ func (h *LoteHandler) RegistrarTemperatura(c *gin.Context) {
 	txHash, err := h.blockchainService.RegistrarTemperatura(
 		req.PrivateKey,
 		req.ContractAddress,
-		req.Temperatura,
+		req.TempMin,
+		req.TempMax,
 	)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, models.Response{

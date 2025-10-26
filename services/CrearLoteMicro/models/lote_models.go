@@ -12,7 +12,8 @@ type CrearLoteRequest struct {
 // RegistrarTemperaturaRequest representa la solicitud para registrar temperatura
 type RegistrarTemperaturaRequest struct {
 	ContractAddress string `json:"contractAddress" binding:"required"`
-	Temperatura     int8   `json:"temperatura" binding:"required"`
+	TempMin         int8   `json:"tempMin" binding:"required"`
+	TempMax         int8   `json:"tempMax" binding:"required"`
 	WalletAddress   string `json:"walletAddress" binding:"required"`
 	PrivateKey      string `json:"privateKey" binding:"required"`
 }
@@ -52,6 +53,8 @@ type LoteInfoResponse struct {
 	PropietarioActual  string `json:"propietarioActual"`
 	TemperaturaMinima  int8   `json:"temperaturaMinima"`
 	TemperaturaMaxima  int8   `json:"temperaturaMaxima"`
+	TempRegMinima      int8   `json:"tempRegMinima"`
+	TempRegMaxima      int8   `json:"tempRegMaxima"`
 	Comprometido       bool   `json:"comprometido"`
 	ContractAddress    string `json:"contractAddress"`
 }

@@ -66,19 +66,15 @@ const lote = await viem.deployContract("LoteTracing", [
 console.log(`   ✅ Lote creado en: ${lote.address}`);
 console.log(`   📅 Fecha de creación: ${new Date().toISOString()}\n`);
 
-// 2. Register temperature readings during manufacturing
-console.log("2. 🌡️  Fabricante registra temperaturas durante fabricación...");
-const temperaturasIniciales = [4, 5, 6, 5, 4];
-for (let i = 0; i < temperaturasIniciales.length; i++) {
-  const temp = temperaturasIniciales[i];
-  const hash = await lote.write.registrarTemperatura([
-    temp,
-    TEMP_MIN,
-    TEMP_MAX,
-  ]);
+// 2. Register temperature ranges during manufacturing
+console.log("2. 🌡️  Fabricante registra rangos de temperatura durante fabricación...");
+const rangosIniciales = [[TEMP_MIN, TEMP_MAX], [0, 10], [1, 9]];
+for (let i = 0; i < rangosIniciales.length; i++) {
+  const [min, max] = rangosIniciales[i];
+  const hash = await lote.write.registrarTemperatura([min, max]);
   await publicClient.waitForTransactionReceipt({ hash });
 
-  console.log(`   📊 Temperatura registrada: ${temp}°C`);
+  console.log(`   📊 Rango registrado: ${min}°C - ${max}°C`);
 }
 
 const comprometidoFabricacion = await lote.read.comprometido();
@@ -97,21 +93,21 @@ await publicClient.waitForTransactionReceipt({ hash: transferHash });
 const propietarioActual = await lote.read.propietarioActual();
 console.log(`   ✅ Custodia transferida a: ${propietarioActual}`);
 
-// 4. Register temperatures during transport
+// 4. Register temperature ranges during transport
 console.log(
-  "\n4. 🌡️  Distribuidor registra temperaturas durante transporte..."
+  "\n4. 🌡️  Distribuidor registra rangos de temperatura durante transporte..."
 );
-const temperaturasTransporte = [6, 7, 8, 7, 6];
-for (let i = 0; i < temperaturasTransporte.length; i++) {
-  const temp = temperaturasTransporte[i];
+const rangosTransporte = [[TEMP_MIN, TEMP_MAX], [1, 10], [0, 9]];
+for (let i = 0; i < rangosTransporte.length; i++) {
+  const [min, max] = rangosTransporte[i];
   const hash = await distribuidor.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [temp, TEMP_MIN, TEMP_MAX],
+    args: [min, max],
   });
   await publicClient.waitForTransactionReceipt({ hash });
-  console.log(`   📊 Temperatura en tránsito: ${temp}°C`);
+  console.log(`   📊 Rango en tránsito: ${min}°C - ${max}°C`);
 }
 
 const comprometidoTransporte = await lote.read.comprometido();
@@ -133,19 +129,19 @@ await publicClient.waitForTransactionReceipt({ hash: transferHash2 });
 const propietarioFinal = await lote.read.propietarioActual();
 console.log(`   ✅ Custodia transferida a: ${propietarioFinal}`);
 
-// 6. Final temperature readings at pharmacy
-console.log("\n6. 🌡️  Farmacia registra temperaturas de almacenamiento...");
-const temperaturasFarmacia = [4, 3, 4, 5];
-for (let i = 0; i < temperaturasFarmacia.length; i++) {
-  const temp = temperaturasFarmacia[i];
+// 6. Final temperature ranges at pharmacy
+console.log("\n6. 🌡️  Farmacia registra rangos de temperatura de almacenamiento...");
+const rangosFarmacia = [[TEMP_MIN, TEMP_MAX], [1, 9], [0, 10]]; // All ranges must include both 2 and 8
+for (let i = 0; i < rangosFarmacia.length; i++) {
+  const [min, max] = rangosFarmacia[i];
   const hash = await farmacia.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [temp, TEMP_MIN, TEMP_MAX],
+    args: [min, max],
   });
   await publicClient.waitForTransactionReceipt({ hash });
-  console.log(`   📊 Temperatura en farmacia: ${temp}°C`);
+  console.log(`   📊 Rango en farmacia: ${min}°C - ${max}°C`);
 }
 
 // 7. Get final state
@@ -161,31 +157,31 @@ console.log(
 console.log(`   🌡️  Rango permitido: ${TEMP_MIN}°C - ${TEMP_MAX}°C`);
 
 // 8. Demonstrate compromised scenario
-console.log("\n8. 🚨 Demostración: Registro de temperatura fuera de rango...");
+console.log("\n8. 🚨 Demostración: Registro de rango inválido...");
 try {
-  // Try to register an out-of-range temperature
+  // Try to register an invalid temperature range
   const hash = await farmacia.writeContract({
     address: lote.address,
     abi: lote.abi,
     functionName: "registrarTemperatura",
-    args: [15, TEMP_MIN, TEMP_MAX], // Way above TEMP_MAX
+    args: [10, 15], // Range doesn't include contract's 2-8
   });
   await publicClient.waitForTransactionReceipt({ hash });
 
   const comprometidoFinal = await lote.read.comprometido();
-  console.log(`   🌡️  Temperatura registrada: 15°C (fuera de rango)`);
+  console.log(`   🌡️  Rango registrado: 10°C - 15°C (no incluye rango del contrato)`);
   console.log(`   ❌ Lote marcado como comprometido: ${comprometidoFinal}`);
 
-  // Try to register another temperature (should fail)
+  // Try to register another temperature range (should fail)
   console.log(
-    "\n9. 🚫 Intento de registrar temperatura en lote comprometido..."
+    "\n9. 🚫 Intento de registrar rango en lote comprometido..."
   );
   try {
     const hash2 = await farmacia.writeContract({
       address: lote.address,
       abi: lote.abi,
       functionName: "registrarTemperatura",
-      args: [5, TEMP_MIN, TEMP_MAX],
+      args: [TEMP_MIN, TEMP_MAX],
     });
     await publicClient.waitForTransactionReceipt({ hash: hash2 });
   } catch (error) {
@@ -206,8 +202,8 @@ console.log(
 console.log(`📍 Dirección del contrato: ${lote.address}`);
 console.log(`🔍 Funcionalidades demostradas:`);
 console.log(`   - ✅ Creación de lote con parámetros de temperatura`);
-console.log(`   - ✅ Registro de temperaturas por propietario actual`);
+console.log(`   - ✅ Registro de rangos de temperatura por cualquier usuario`);
 console.log(`   - ✅ Transferencia de custodia entre actores`);
-console.log(`   - ✅ Detección automática de temperaturas fuera de rango`);
+console.log(`   - ✅ Validación de rangos contra temperaturas del contrato`);
 console.log(`   - ✅ Prevención de registros en lotes comprometidos`);
-console.log(`   - ✅ Control de acceso basado en propietario actual`);
+console.log(`   - ✅ Control de acceso para transferencia de custodia`);

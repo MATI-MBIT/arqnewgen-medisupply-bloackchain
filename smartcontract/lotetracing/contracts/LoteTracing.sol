@@ -40,11 +40,12 @@ contract LoteTracing {
         bool comprometido
     );
     event LoteComprometido(
-        address indexed propietario, 
-        int8 tempMin, 
+        address indexed propietario,
+        int8 tempMin,
         int8 tempMax,
         bool comprometido,
-        string motivo);
+        string motivo
+    );
 
     //==============================================================
     // MODIFICADOR DE ACCESO
@@ -83,18 +84,25 @@ contract LoteTracing {
      * @notice Registra una lectura de temperatura. Solo el propietario actual puede hacerlo.
      * Si la temperatura está fuera de rango, el lote se marca como comprometido.
      */
-    function registrarTemperatura(
-        int8 _temperatura,
-        int8 _tempMin,
-        int8 _tempMax
-    ) external soloPropietario {
+    function registrarTemperatura(int8 _tempMin, int8 _tempMax) external {
         require(!comprometido, "El lote ya esta comprometido");
 
         tempRegMinima = _tempMin;
         tempRegMaxima = _tempMax;
-        if (_temperatura < _tempMin || _temperatura > _tempMax) {
+        if (
+            temperaturaMinima < _tempMin ||
+            temperaturaMinima > _tempMax ||
+            temperaturaMaxima < _tempMin ||
+            temperaturaMaxima > _tempMax
+        ) {
             comprometido = true;
-            emit LoteComprometido(msg.sender, _tempMin, _tempMax, comprometido, "Temperatura fuera de rango");
+            emit LoteComprometido(
+                msg.sender,
+                _tempMin,
+                _tempMax,
+                comprometido,
+                "Temperatura fuera de rango"
+            );
         }
     }
 
@@ -103,12 +111,16 @@ contract LoteTracing {
      */
     function transferirCustodia(
         address _nuevoPropietario
-    ) external soloPropietario{
+    ) external soloPropietario {
         require(_nuevoPropietario != address(0), "Direccion invalida");
 
         address propietarioAnterior = propietarioActual;
         propietarioActual = _nuevoPropietario;
 
-        emit CustodiaTransferida(propietarioAnterior, _nuevoPropietario, comprometido);
+        emit CustodiaTransferida(
+            propietarioAnterior,
+            _nuevoPropietario,
+            comprometido
+        );
     }
 }

@@ -10,7 +10,7 @@ import (
 	"github.com/ethereum/go-ethereum/common/hexutil"
 )
 
-// ABI del contrato LoteTracing para decodificación - Compilado con Hardhat
+// ABI del contrato LoteTracing para decodificación - Actualizado con nuevos campos
 const contractABI = `[
 	{
 		"inputs": [
@@ -51,11 +51,26 @@ const contractABI = `[
 	},
 	{
 		"inputs": [
-			{"internalType": "int8", "name": "_temperatura", "type": "int8"}
+			{"internalType": "int8", "name": "_tempMin", "type": "int8"},
+			{"internalType": "int8", "name": "_tempMax", "type": "int8"}
 		],
 		"name": "registrarTemperatura",
 		"outputs": [],
 		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "tempRegMaxima",
+		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "tempRegMinima",
+		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
+		"stateMutability": "view",
 		"type": "function"
 	},
 	{
@@ -189,9 +204,10 @@ func formatValue(value interface{}) interface{} {
 	}
 }
 
-// DecodeSpecificInputData decodifica el input data específico que proporcionaste
+// DecodeSpecificInputData decodifica el input data específico actualizado con 2 parámetros
 func DecodeSpecificInputData() (*DecodedTransaction, error) {
-	inputData := "0xf7b5b4e90000000000000000000000000000000000000000000000000000000000000006"
+	// Ejemplo de registrarTemperatura con tempMin=2, tempMax=8
+	inputData := "0x3c9e105800000000000000000000000000000000000000000000000000000000000000020000000000000000000000000000000000000000000000000000000000000008"
 	return DecodeInputData(inputData)
 }
 

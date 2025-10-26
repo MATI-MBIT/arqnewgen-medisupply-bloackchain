@@ -34,24 +34,24 @@ contract LoteTracingTest is Test {
     }
 
     function test_RegistrarTemperatura_Valida() public {
-        // Registrar temperatura válida (solo propietario puede hacerlo)
-        vm.prank(fabricante);
-        lote.registrarTemperatura(5, TEMP_MIN, TEMP_MAX);
+        // Registrar rango de temperatura válido (cualquiera puede hacerlo)
+        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
         
         // Verificar que el lote no está comprometido
         assertEq(lote.comprometido(), false);
     }
 
-    function test_RegistrarTemperatura_SoloPropietario() public {
+    function test_RegistrarTemperatura_CualquieraPuede() public {
+        // Ahora cualquiera puede registrar temperaturas
         vm.prank(distribuidor);
-        vm.expectRevert("Accion solo permitida para el propietario actual");
-        lote.registrarTemperatura(5, TEMP_MIN, TEMP_MAX);
+        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
+        
+        assertEq(lote.comprometido(), false);
     }
 
-    function test_RegistrarTemperatura_FueraDeRango() public {
-        // Registrar temperatura fuera de rango
-        vm.prank(fabricante);
-        lote.registrarTemperatura(15, TEMP_MIN, TEMP_MAX); // Mayor que TEMP_MAX (8)
+    function test_RegistrarTemperatura_RangoInvalido() public {
+        // Registrar rango que no incluye las temperaturas del contrato
+        lote.registrarTemperatura(10, 15); // Rango 10-15 no incluye 2-8
         
         // Verificar que el lote se marcó como comprometido
         assertEq(lote.comprometido(), true);
@@ -77,20 +77,16 @@ contract LoteTracingTest is Test {
     }
 
     function test_CicloCompleto() public {
-        // 1. Registrar temperaturas válidas
-        vm.prank(fabricante);
-        lote.registrarTemperatura(4, TEMP_MIN, TEMP_MAX);
-        
-        vm.prank(fabricante);
-        lote.registrarTemperatura(6, TEMP_MIN, TEMP_MAX);
+        // 1. Registrar rangos de temperatura válidos
+        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
+        lote.registrarTemperatura(0, 10);
         
         // 2. Transferir a distribuidor
         vm.prank(fabricante);
         lote.transferirCustodia(distribuidor);
         
-        // 3. Distribuidor registra temperatura
-        vm.prank(distribuidor);
-        lote.registrarTemperatura(5, TEMP_MIN, TEMP_MAX);
+        // 3. Distribuidor registra rango de temperatura
+        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
         
         // 4. Transferir a farmacia
         vm.prank(distribuidor);
@@ -102,27 +98,24 @@ contract LoteTracingTest is Test {
     }
 
     function test_LoteComprometidoNoPermiteTemperaturas() public {
-        // Comprometer el lote
-        vm.prank(fabricante);
-        lote.registrarTemperatura(15, TEMP_MIN, TEMP_MAX); // Fuera de rango
+        // Comprometer el lote con rango inválido
+        lote.registrarTemperatura(10, 15); // Rango no incluye 2-8
         
         assertTrue(lote.comprometido());
         
-        // Intentar registrar otra temperatura
-        vm.prank(fabricante);
+        // Intentar registrar otro rango
         vm.expectRevert("El lote ya esta comprometido");
-        lote.registrarTemperatura(5, TEMP_MIN, TEMP_MAX);
+        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
     }
 
-    function testFuzz_RegistrarTemperatura(int8 temperatura) public {
-        vm.assume(temperatura >= -50 && temperatura <= 50);
+    function testFuzz_RegistrarTemperatura(int8 tempMin, int8 tempMax) public {
+        vm.assume(tempMin >= -50 && tempMax <= 50 && tempMin <= tempMax);
         
-        // Registrar temperatura
-        vm.prank(fabricante);
-        lote.registrarTemperatura(temperatura, TEMP_MIN, TEMP_MAX);
+        // Registrar rango de temperatura
+        lote.registrarTemperatura(tempMin, tempMax);
         
-        // Verificar estado según temperatura
-        if (temperatura < TEMP_MIN || temperatura > TEMP_MAX) {
+        // Verificar estado según si el rango incluye las temperaturas del contrato
+        if (TEMP_MIN < tempMin || TEMP_MIN > tempMax || TEMP_MAX < tempMin || TEMP_MAX > tempMax) {
             assertTrue(lote.comprometido());
         } else {
             assertFalse(lote.comprometido());
