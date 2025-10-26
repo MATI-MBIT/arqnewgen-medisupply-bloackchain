@@ -7,6 +7,7 @@ Esta implementación sigue las mejores prácticas de Helm, reutilizando charts e
 ## 📦 Reutilización de Charts
 
 ### Kafka (2 instancias)
+
 - **kafka**: Cluster principal (puerto 9092)
   - Configuración: `config/kafka-values.yaml`
   - Propósito: Recepción de eventos desde MQTT Bridge
@@ -16,6 +17,7 @@ Esta implementación sigue las mejores prácticas de Helm, reutilizando charts e
   - Propósito: Destino de MirrorMaker2 para procesamiento de pedidos
 
 ### Kafka UI (2 instancias)
+
 - **kafka-ui**: Monitoreo del cluster principal
   - Configuración: valores por defecto
   - URL: http://localhost:9090
@@ -25,6 +27,7 @@ Esta implementación sigue las mejores prácticas de Helm, reutilizando charts e
   - URL: http://localhost:9091
 
 ### Strimzi Operator (1 instancia)
+
 - **strimzi-operator**: Gestiona ambos clusters y recursos
   - Configuración: `config/strimzi-values.yaml`
   - Gestiona: Kafka Connect, MirrorMaker2, Topics, Conectores
@@ -32,40 +35,46 @@ Esta implementación sigue las mejores prácticas de Helm, reutilizando charts e
 ## 🔄 Flujos de Datos
 
 ### Flujo 1: Eventos → RabbitMQ
-```
+
+``` text
 mqtt-event-generator → EMQX → mqtt-order-event-client → EMQX → mqtt-kafka-bridge → Kafka (9092) → Kafka Connect → RabbitMQ
 ```
 
 ### Flujo 2: Eventos → Kafka Pedidos
-```
+
+``` text
 mqtt-event-generator → EMQX → mqtt-order-event-client → EMQX → mqtt-kafka-bridge → Kafka (9092) → MirrorMaker2 → Kafka Pedidos (9093)
 ```
 
 ## 🏗️ Ventajas del Diseño
 
 ### ✅ Reutilización de Código
+
 - Un solo chart de Kafka para múltiples instancias
 - Un solo chart de Kafka UI para múltiples clusters
 - Configuración específica via values files
 
 ### ✅ Mantenibilidad
+
 - Actualizaciones centralizadas en charts base
 - Configuraciones separadas y versionables
 - Fácil escalabilidad horizontal
 
 ### ✅ Consistencia
+
 - Misma configuración base para todos los clusters
 - Patrones de naming consistentes
 - Gestión unificada de recursos
 
 ### ✅ Flexibilidad
+
 - Fácil adición de nuevos clusters
 - Configuraciones independientes por entorno
 - Despliegue selectivo de componentes
 
 ## 📁 Estructura de Configuración
 
-```
+``` text
 config/
 ├── kafka-values.yaml           # Cluster principal
 ├── kafka-pedidos-values.yaml   # Cluster secundario
@@ -78,11 +87,13 @@ config/
 ## 🚀 Comandos de Despliegue
 
 ### Despliegue Completo
+
 ```bash
 make init deploy
 ```
 
 ### Despliegue por Componentes
+
 ```bash
 # Solo clusters Kafka
 helm upgrade --install kafka ./kafka --values ./config/kafka-values.yaml -n medisupply
@@ -99,17 +110,20 @@ helm upgrade --install strimzi-operator ./strimzi-kafka-operator --values ./conf
 ## 🔧 Configuraciones Específicas
 
 ### Kafka Pedidos
+
 - **Puerto**: 9093 (evita conflictos)
 - **Recursos**: Optimizados para cluster secundario
 - **Persistencia**: Deshabilitada (desarrollo)
 - **Replicación**: Factor 1
 
 ### Kafka UI Pedidos
+
 - **Bootstrap**: kafka-pedidos:9093
 - **Nombre**: kafka-pedidos
 - **Puerto**: 8080 (interno)
 
 ### Strimzi Operator
+
 - **Namespace**: medisupply únicamente
 - **Recursos**: Optimizados para desarrollo
 - **Features**: Configuración mínima
@@ -117,6 +131,7 @@ helm upgrade --install strimzi-operator ./strimzi-kafka-operator --values ./conf
 ## 🔍 Monitoreo y Observabilidad
 
 ### Dashboards Disponibles
+
 | Servicio | URL | Cluster |
 |----------|-----|---------|
 | Kafka UI Principal | http://localhost:9090 | kafka:9092 |
@@ -126,6 +141,7 @@ helm upgrade --install strimzi-operator ./strimzi-kafka-operator --values ./conf
 | Kiali | http://localhost:20001 | Service Mesh |
 
 ### Comandos de Estado
+
 ```bash
 make status                    # Estado general
 kubectl get kafka -n medisupply    # Clusters Kafka
@@ -136,6 +152,7 @@ kubectl get kafkamirrormaker2 -n medisupply # MM2
 ## 🛠️ Troubleshooting
 
 ### Verificar Conectividad entre Clusters
+
 ```bash
 # Desde Kafka principal
 kubectl exec -n medisupply kafka-controller-0 -- kafka-topics.sh --bootstrap-server localhost:9092 --list
@@ -145,6 +162,7 @@ kubectl exec -n medisupply kafka-pedidos-controller-0 -- kafka-topics.sh --boots
 ```
 
 ### Verificar MirrorMaker2
+
 ```bash
 # Estado de MM2
 kubectl describe kafkamirrormaker2 kafka-mm2 -n medisupply
