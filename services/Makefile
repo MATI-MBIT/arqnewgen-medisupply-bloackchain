@@ -8,9 +8,9 @@ DOCKER_REGISTRY := $(or $(DOCKER_REGISTRY),)
 IMAGE_TAG := $(or $(IMAGE_TAG),latest)
 
 # Servicios disponibles
-SERVICES := # mqtt-event-generator mqtt-order-event-client warehouse/batch order_management/order
+SERVICES := CrearLoteMicro # mqtt-event-generator mqtt-order-event-client warehouse/batch order_management/order
 
-.PHONY: help build push build-all push-all build-push build-push-all list-images clean-images setup-local-registry stop-local-registry load-to-k8s load-all-to-k8s
+.PHONY: help build push build-all push-all build-push build-push-all list-images clean-images setup-local-registry stop-local-registry load-to-k8s load-all-to-k8s update-contract-assets validate-contract-assets
 
 help: ## Mostrar ayuda
 	@echo "Comandos disponibles:"
@@ -28,6 +28,10 @@ help: ## Mostrar ayuda
 	@echo "  clean-images           - Eliminar imágenes Docker locales"
 	@echo "  setup-local-registry   - Configurar registry local para desarrollo"
 	@echo "  stop-local-registry    - Detener registry local"
+	@echo ""
+	@echo "📄 Gestión de Smart Contracts:"
+	@echo "  update-contract-assets SERVICE=<name> - Actualizar assets del contrato desde Hardhat"
+	@echo "  validate-contract-assets SERVICE=<name> - Validar integridad de assets del contrato"
 	@echo ""
 	@echo "Variables de entorno:"
 	@echo "  K8S_PROVIDER           - Proveedor K8s (kind/minikube, default: kind)"
@@ -179,3 +183,40 @@ build-load-all: ## Construir y cargar todas las imágenes a K8s local
 		$(MAKE) build-load SERVICE=$$service; \
 	done
 	@echo "✅ Todas las imágenes construidas y cargadas a K8s!"
+
+# Gestión de Smart Contracts
+update-contract-assets: ## Actualizar assets del contrato desde Hardhat
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "❌ Error: Debes especificar SERVICE=<nombre>"; \
+		echo "Servicios disponibles: $(SERVICES)"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(SERVICE)" ]; then \
+		echo "❌ Error: El servicio '$(SERVICE)' no existe"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(SERVICE)/Makefile" ]; then \
+		echo "❌ Error: El servicio '$(SERVICE)' no tiene Makefile"; \
+		exit 1; \
+	fi
+	@echo "🔄 Actualizando assets del contrato para $(SERVICE)..."
+	@cd $(SERVICE) && $(MAKE) update-contract-assets
+	@echo "✅ Assets del contrato actualizados para $(SERVICE)!"
+
+validate-contract-assets: ## Validar integridad de assets del contrato
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "❌ Error: Debes especificar SERVICE=<nombre>"; \
+		echo "Servicios disponibles: $(SERVICES)"; \
+		exit 1; \
+	fi
+	@if [ ! -d "$(SERVICE)" ]; then \
+		echo "❌ Error: El servicio '$(SERVICE)' no existe"; \
+		exit 1; \
+	fi
+	@if [ ! -f "$(SERVICE)/Makefile" ]; then \
+		echo "❌ Error: El servicio '$(SERVICE)' no tiene Makefile"; \
+		exit 1; \
+	fi
+	@echo "🔍 Validando assets del contrato para $(SERVICE)..."
+	@cd $(SERVICE) && $(MAKE) validate-assets
+	@echo "✅ Assets del contrato validados para $(SERVICE)!"

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"CrearLoteMicro/assets/contracts"
 	"CrearLoteMicro/models"
 	"context"
 	"crypto/ecdsa"
@@ -22,129 +23,14 @@ type BlockchainService struct {
 	chainID *big.Int
 }
 
-// ABI del contrato LoteTracing - Actualizado con nuevos campos y funciones
-const contractABI = `[
-	{
-		"inputs": [
-			{"internalType": "string", "name": "_loteId", "type": "string"},
-			{"internalType": "int8", "name": "_tempMin", "type": "int8"},
-			{"internalType": "int8", "name": "_tempMax", "type": "int8"}
-		],
-		"stateMutability": "nonpayable",
-		"type": "constructor"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{"indexed": true, "internalType": "address", "name": "propietarioAnterior", "type": "address"},
-			{"indexed": true, "internalType": "address", "name": "nuevoPropietario", "type": "address"},
-			{"indexed": false, "internalType": "bool", "name": "comprometido", "type": "bool"}
-		],
-		"name": "CustodiaTransferida",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{"indexed": true, "internalType": "address", "name": "propietario", "type": "address"},
-			{"indexed": false, "internalType": "int8", "name": "tempMin", "type": "int8"},
-			{"indexed": false, "internalType": "int8", "name": "tempMax", "type": "int8"},
-			{"indexed": false, "internalType": "bool", "name": "comprometido", "type": "bool"},
-			{"indexed": false, "internalType": "string", "name": "motivo", "type": "string"}
-		],
-		"name": "LoteComprometido",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{"indexed": true, "internalType": "string", "name": "loteId", "type": "string"},
-			{"indexed": true, "internalType": "address", "name": "fabricante", "type": "address"},
-			{"indexed": false, "internalType": "int8", "name": "temperaturaMinima", "type": "int8"},
-			{"indexed": false, "internalType": "int8", "name": "temperaturaMaxima", "type": "int8"}
-		],
-		"name": "LoteCreado",
-		"type": "event"
-	},
-	{
-		"inputs": [],
-		"name": "comprometido",
-		"outputs": [{"internalType": "bool", "name": "", "type": "bool"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "fabricante",
-		"outputs": [{"internalType": "address", "name": "", "type": "address"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "loteId",
-		"outputs": [{"internalType": "string", "name": "", "type": "string"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "propietarioActual",
-		"outputs": [{"internalType": "address", "name": "", "type": "address"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{"internalType": "int8", "name": "_tempMin", "type": "int8"},
-			{"internalType": "int8", "name": "_tempMax", "type": "int8"}
-		],
-		"name": "registrarTemperatura",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "tempRegMaxima",
-		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "tempRegMinima",
-		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "temperaturaMaxima",
-		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "temperaturaMinima",
-		"outputs": [{"internalType": "int8", "name": "", "type": "int8"}],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{"internalType": "address", "name": "_nuevoPropietario", "type": "address"}
-		],
-		"name": "transferirCustodia",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	}
-]`
+// Funciones para obtener ABI y Bytecode desde assets
+func getContractABI() string {
+	return contracts.GetLoteTracingABI()
+}
 
-// Bytecode del contrato (necesario para el deploy) - Actualizado con lógica de compromiso CORREGIDA (< y >)
-const contractBytecode = "0x60e060405234801561001057600080fd5b506040516109ee3803806109ee83398101604081905261002f9161011e565b600061003b848261027b565b5033608081905260018054600085810b60a05284900b60c0526001600160b81b03191662010000830261ffff60ff60b01b011916179055604051610080908590610339565b60408051918290038220600086810b845285900b6020840152917f614b7bdb598a394ea5f748900a1d99d9db2adc2a0662e25111fbf0b6d06dbf74910160405180910390a3505050610355565b634e487b7160e01b600052604160045260246000fd5b60005b838110156100fe5781810151838201526020016100e6565b50506000910152565b8051600081900b811461011957600080fd5b919050565b60008060006060848603121561013357600080fd5b83516001600160401b0381111561014957600080fd5b8401601f8101861361015a57600080fd5b80516001600160401b03811115610173576101736100cd565b604051601f8201601f19908116603f011681016001600160401b03811182821017156101a1576101a16100cd565b6040528181528282016020018810156101b957600080fd5b6101ca8260208301602086016100e3565b94506101db91505060208501610107565b91506101e960408501610107565b90509250925092565b600181811c9082168061020657607f821691505b60208210810361022657634e487b7160e01b600052602260045260246000fd5b50919050565b601f82111561027657806000526020600020601f840160051c810160208510156102535750805b601f840160051c820191505b81811015610273576000815560010161025f565b50505b505050565b81516001600160401b03811115610294576102946100cd565b6102a8816102a284546101f2565b8461022c565b6020601f8211600181146102dc57600083156102c45750848201515b600019600385901b1c1916600184901b178455610273565b600084815260208120601f198516915b8281101561030c57878501518255602094850194600190920191016102ec565b508482101561032a5786840151600019600387901b60f8161c191681555b50505050600190811b01905550565b6000825161034b8184602087016100e3565b9190910192915050565b60805160a05160c05161065d6103916000396000818160d001526102920152600081816101aa01526102620152600061011c015261065d6000f3fe608060405234801561001057600080fd5b506004361061009e5760003560e01c806386b7d1e01161006657806386b7d1e014610156578063902e6d661461017a57806395defb561461018c578063af1e6253146101a5578063d48cf490146101cc57600080fd5b80630bf3a863146100a35780631ccbe36b146100b85780632ba6b752146100cb5780633f3a74a41461010a57806346ed76f114610117575b600080fd5b6100b66100b136600461053c565b6101e1565b005b6100b66100c636600461056f565b61035f565b6100f27f000000000000000000000000000000000000000000000000000000000000000081565b60405160009190910b81526020015b60405180910390f35b6001546100f29060000b81565b61013e7f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b039091168152602001610101565b60015461016a90600160b01b900460ff1681565b6040519015158152602001610101565b6001546100f290610100900460000b81565b60015461013e906201000090046001600160a01b031681565b6100f27f000000000000000000000000000000000000000000000000000000000000000081565b6101d4610497565b604051610101919061059f565b600154600160b01b900460ff16156102405760405162461bcd60e51b815260206004820152601c60248201527f456c206c6f7465207961206573746120636f6d70726f6d657469646f0000000060448201526064015b60405180910390fd5b6001805460ff8381166101000261ffff1990921690851617179055600082810b7f000000000000000000000000000000000000000000000000000000000000000090910b1315806102b757508060000b7f000000000000000000000000000000000000000000000000000000000000000060000b12155b61035a576001805460ff60b01b1916600160b01b9081179182905560408051600086810b825285900b60208201529190920460ff16151591810191909152608060608201819052601a908201527f54656d70657261747572612066756572612064652072616e676f00000000000060a082015233907f26174a1d6632f37659819648fe37603b6961a9c4af42e0dc262b371b8320d76b9060c00160405180910390a25b5050565b6001546201000090046001600160a01b031633146103d75760405162461bcd60e51b815260206004820152603060248201527f416363696f6e20736f6c6f207065726d6974696461207061726120656c20707260448201526f1bdc1a595d185c9a5bc81858dd1d585b60821b6064820152608401610237565b6001600160a01b0381166104225760405162461bcd60e51b8152602060048201526012602482015271446972656363696f6e20696e76616c69646160701b6044820152606401610237565b600180546001600160a01b038381166201000081810262010000600160b01b03198516179485905560405160ff600160b01b9096049590951615158552909204169182907f0fef6771eca134aaa0a42e1d6a5e8fcbd185e2148341f7158fd3460de9fc2c6b9060200160405180910390a35050565b600080546104a4906105ed565b80601f01602080910402602001604051908101604052809291908181526020018280546104d0906105ed565b801561051d5780601f106104f25761010080835404028352916020019161051d565b820191906000526020600020905b81548152906001019060200180831161050057829003601f168201915b505050505081565b8035600081900b811461053757600080fd5b919050565b6000806040838503121561054f57600080fd5b61055883610525565b915061056660208401610525565b90509250929050565b60006020828403121561058157600080fd5b81356001600160a01b038116811461059857600080fd5b9392505050565b602081526000825180602084015260005b818110156105cd57602081860181015160408684010152016105b0565b506000604082850101526040601f19601f83011684010191505092915050565b600181811c9082168061060157607f821691505b60208210810361062157634e487b7160e01b600052602260045260246000fd5b5091905056fea2646970667358221220be04fcc7a8591026bdc9f74276ee287097af5e2884636657ed05104a5501ad7a64736f6c634300081c0033"
+func getContractBytecode() string {
+	return contracts.GetLoteTracingBytecode()
+}
 
 func NewBlockchainService(rpcURL string, chainID int64) (*BlockchainService, error) {
 	client, err := ethclient.Dial(rpcURL)
@@ -186,7 +72,7 @@ func (bs *BlockchainService) DeployContract(privateKeyHex, loteID string, tempMi
 	}
 
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		return "", "", fmt.Errorf("error parseando ABI: %v", err)
 	}
@@ -209,7 +95,7 @@ func (bs *BlockchainService) DeployContract(privateKeyHex, loteID string, tempMi
 	}
 
 	// Crear transacción de deploy
-	data := append(common.FromHex(contractBytecode), input...)
+	data := append(common.FromHex(getContractBytecode()), input...)
 	
 	tx := types.NewContractCreation(nonce, big.NewInt(0), 3000000, gasPrice, data)
 	
@@ -267,7 +153,7 @@ func (bs *BlockchainService) RegistrarTemperatura(privateKeyHex, contractAddress
 	}
 
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		return "", fmt.Errorf("error parseando ABI: %v", err)
 	}
@@ -325,7 +211,7 @@ func (bs *BlockchainService) TransferirCustodia(privateKeyHex, contractAddress, 
 	}
 
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		return "", fmt.Errorf("error parseando ABI: %v", err)
 	}
@@ -360,7 +246,7 @@ func (bs *BlockchainService) ObtenerInfoLote(contractAddress string) (*models.Lo
 	fmt.Printf("[DEBUG] Iniciando ObtenerInfoLote para dirección: %s\n", contractAddress)
 	
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		fmt.Printf("[ERROR] Error parseando ABI: %v\n", err)
 		return nil, fmt.Errorf("error parseando ABI: %v", err)
@@ -490,7 +376,7 @@ func (bs *BlockchainService) ObtenerInfoLote(contractAddress string) (*models.Lo
 
 func (bs *BlockchainService) ObtenerCadenaBlockchain(contractAddress string) (*models.CadenaBlockchainResponse, error) {
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		return nil, fmt.Errorf("error parseando ABI: %v", err)
 	}
@@ -762,7 +648,7 @@ func (bs *BlockchainService) probarLlamadasContrato(contractAddr common.Address)
 	calls := make(map[string]interface{})
 	
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
 	if err != nil {
 		calls["abiError"] = err.Error()
 		return calls

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"CrearLoteMicro/assets/contracts"
 	"CrearLoteMicro/models"
 	"context"
 	"fmt"
@@ -17,7 +18,7 @@ import (
 // ObtenerCadenaBlockchainOptimizada versión optimizada para RPC gratuitos con limitaciones estrictas
 func (bs *BlockchainService) ObtenerCadenaBlockchainOptimizada(contractAddress string) (*models.CadenaBlockchainResponse, error) {
 	// Parsear ABI
-	parsedABI, err := abi.JSON(strings.NewReader(contractABI))
+	parsedABI, err := abi.JSON(strings.NewReader(contracts.GetLoteTracingABI()))
 	if err != nil {
 		return nil, fmt.Errorf("error parseando ABI: %v", err)
 	}

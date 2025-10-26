@@ -1,0 +1,251 @@
+[
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_loteId",
+        "type": "string"
+      },
+      {
+        "internalType": "int8",
+        "name": "_tempMin",
+        "type": "int8"
+      },
+      {
+        "internalType": "int8",
+        "name": "_tempMax",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "propietarioAnterior",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "nuevoPropietario",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "comprometido",
+        "type": "bool"
+      }
+    ],
+    "name": "CustodiaTransferida",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "propietario",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "int8",
+        "name": "tempMin",
+        "type": "int8"
+      },
+      {
+        "indexed": false,
+        "internalType": "int8",
+        "name": "tempMax",
+        "type": "int8"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "comprometido",
+        "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "motivo",
+        "type": "string"
+      }
+    ],
+    "name": "LoteComprometido",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "string",
+        "name": "loteId",
+        "type": "string"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "fabricante",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "int8",
+        "name": "temperaturaMinima",
+        "type": "int8"
+      },
+      {
+        "indexed": false,
+        "internalType": "int8",
+        "name": "temperaturaMaxima",
+        "type": "int8"
+      }
+    ],
+    "name": "LoteCreado",
+    "type": "event"
+  },
+  {
+    "inputs": [],
+    "name": "comprometido",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "fabricante",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "loteId",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "propietarioActual",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "int8",
+        "name": "_tempMin",
+        "type": "int8"
+      },
+      {
+        "internalType": "int8",
+        "name": "_tempMax",
+        "type": "int8"
+      }
+    ],
+    "name": "registrarTemperatura",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tempRegMaxima",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "tempRegMinima",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "temperaturaMaxima",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "temperaturaMinima",
+    "outputs": [
+      {
+        "internalType": "int8",
+        "name": "",
+        "type": "int8"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "_nuevoPropietario",
+        "type": "address"
+      }
+    ],
+    "name": "transferirCustodia",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]
