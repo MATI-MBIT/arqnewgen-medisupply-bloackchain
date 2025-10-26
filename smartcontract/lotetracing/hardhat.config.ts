@@ -10,6 +10,7 @@ const config: HardhatUserConfig = {
       default: {
         version: "0.8.28",
         settings: {
+          evmVersion: "london", // Compatible con Sepolia
           optimizer: {
             enabled: true,
             runs: 200,
@@ -19,6 +20,7 @@ const config: HardhatUserConfig = {
       production: {
         version: "0.8.28",
         settings: {
+          evmVersion: "london", // Compatible con Sepolia
           optimizer: {
             enabled: true,
             runs: 200,

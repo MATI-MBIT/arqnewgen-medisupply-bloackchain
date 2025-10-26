@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "33555fe8-eb96-4932-a1dd-db19afbef88c",
+		"_postman_id": "1f482485-8b59-4ad5-b774-68e4e221a06e",
 		"name": "CrearLoteMicro API",
 		"description": "Colección completa de endpoints para el microservicio CrearLoteMicro que interactúa con el contrato LoteTracing en Sepolia. Incluye funcionalidades para crear lotes, registrar temperaturas, transferir custodia, obtener historial blockchain, diagnóstico de contratos y utilidades de decodificación.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -249,7 +249,8 @@
 							"});"
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -263,7 +264,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"loteId\": \"LOTE_MEDICAMENTO_001\",\n    \"temperaturaMin\": 2,\n    \"temperaturaMax\": 8,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"raw": "{\n    \"loteId\": \"LOTE_MEDICAMENTO_002\",\n    \"temperaturaMin\": 2,\n    \"temperaturaMax\": 8,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -349,7 +350,8 @@
 							"});"
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -363,7 +365,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"tempMin\": 2,\n    \"tempMax\": 8,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"tempMin\": 4,\n    \"tempMax\": 6,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -449,7 +451,8 @@
 							"});"
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -463,7 +466,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"tempMin\": 15,\n    \"tempMax\": 20,\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"tempMin\": 15,\n    \"tempMax\": 20,\n    \"walletAddress\": \"{{nuevo_propietario_1}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -580,7 +583,8 @@
 							"});"
 						],
 						"type": "text/javascript",
-						"packages": {}
+						"packages": {},
+						"requests": {}
 					}
 				}
 			],
@@ -594,7 +598,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"nuevoPropietario\": \"0x8ba1f109551bD432803012645Hac136c22C177c9\",\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
+					"raw": "{\n    \"contractAddress\": \"{{contract_address}}\",\n    \"nuevoPropietario\": \"{{nuevo_propietario_1}}\",\n    \"walletAddress\": \"{{wallet_address}}\",\n    \"privateKey\": \"{{private_key}}\"\n}",
 					"options": {
 						"raw": {
 							"language": "json"
