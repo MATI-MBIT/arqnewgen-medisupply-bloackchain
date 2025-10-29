@@ -274,6 +274,20 @@ func startHTTPServer(port string) {
 		})
 	})
 
+	router.POST("/contract-broken", func(c *gin.Context) {
+		var payload publisher.LoteInfo
+		if err := c.BindJSON(&payload); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid payload"})
+			return
+		}
+		log.Printf("LoteInfo recibido: loteId=%s, contractAddress=%s, comprometido=%t", payload.LoteID, payload.ContractAddress, payload.Comprometido)
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "LoteInfo recibido",
+			"loteId":  payload.LoteID,
+		})
+	})
+
 	// Start server
 	log.Printf("Starting HTTP server on port %s", port)
 	if err := router.Run(":" + port); err != nil {

@@ -3,6 +3,7 @@ package config
 import (
 	"log"
 	"os"
+	"path/filepath"
 
 	"github.com/joho/godotenv"
 )
@@ -11,6 +12,7 @@ type Config struct {
 	SepoliaRPC string
 	Port       string
 	ChainID    int64
+	SepoliaWS  string
 }
 
 func LoadConfig() *Config {
@@ -23,6 +25,7 @@ func LoadConfig() *Config {
 		SepoliaRPC: getEnv("SEPOLIA_RPC", "https://sepolia.infura.io/v3/YOUR_PROJECT_ID"),
 		Port:       getEnv("PORT", "8080"),
 		ChainID:    11155111, // Sepolia Chain ID
+		SepoliaWS:  getEnv("SEPOLIA_WS", "wss://eth-sepolia.g.alchemy.com/v2/"+filepath.Base(getEnv("SEPOLIA_RPC", "YOUR_PROJECT_ID"))),
 	}
 
 	return config
