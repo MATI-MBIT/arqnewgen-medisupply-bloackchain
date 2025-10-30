@@ -18,9 +18,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error inicializando servicio de blockchain: %v", err)
 	}
+	// Inicializar servicio de blockchainSocket
+	blockchainWebsocketService := services.NewBlockchainWebsocketService(cfg.SepoliaWS, blockchainService)
 
 	// Inicializar handlers
-	loteHandler := handlers.NewLoteHandler(blockchainService)
+	loteHandler := handlers.NewLoteHandler(blockchainService, blockchainWebsocketService)
 
 	// Configurar Gin
 	r := gin.Default()
@@ -49,6 +51,7 @@ func main() {
 		lote := api.Group("/lote")
 		{
 			lote.POST("/crear", loteHandler.CrearLote)
+			lote.POST("/nuevo", loteHandler.CrearNuevoLote)
 			lote.POST("/temperatura", loteHandler.RegistrarTemperatura)
 			lote.POST("/transferir", loteHandler.TransferirCustodia)
 			lote.GET("/info/:contractAddress", loteHandler.ObtenerLote)
@@ -74,7 +77,8 @@ func main() {
 	// Iniciar servidor
 	log.Printf("CrearLoteMicro iniciando en puerto %s", cfg.Port)
 	log.Printf("Conectado a Sepolia RPC: %s", cfg.SepoliaRPC)
-	
+	log.Printf("Conectado a Sepolia WS: %s", cfg.SepoliaWS)
+
 	if err := r.Run(":" + cfg.Port); err != nil {
 		log.Fatalf("Error iniciando servidor: %v", err)
 	}

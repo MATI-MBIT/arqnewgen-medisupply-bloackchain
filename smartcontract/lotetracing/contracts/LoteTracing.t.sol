@@ -96,18 +96,6 @@ contract LoteTracingTest is Test {
         assertEq(lote.comprometido(), false);
     }
 
-    function test_LoteComprometidoNoPermiteTemperaturas() public {
-        // Comprometer el lote con rango inválido
-        vm.prank(fabricante);
-        lote.registrarTemperatura(10, 15); // Rango fuera de 2-8
-        
-        assertTrue(lote.comprometido());
-        
-        // Intentar registrar otro rango
-        vm.prank(fabricante);
-        vm.expectRevert("El lote ya esta comprometido");
-        lote.registrarTemperatura(TEMP_MIN, TEMP_MAX);
-    }
 
     function testFuzz_RegistrarTemperatura(int8 tempMin, int8 tempMax) public {
         vm.assume(tempMin >= -50 && tempMax <= 50 && tempMin <= tempMax);

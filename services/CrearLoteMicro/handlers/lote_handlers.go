@@ -5,18 +5,21 @@ import (
 	"CrearLoteMicro/services"
 	"CrearLoteMicro/utils"
 	"context"
+	"fmt"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
 )
 
 type LoteHandler struct {
-	blockchainService *services.BlockchainService
+	blockchainService          *services.BlockchainService
+	blockchainWebsocketService *services.BlockchainWebsocketService
 }
 
-func NewLoteHandler(blockchainService *services.BlockchainService) *LoteHandler {
+func NewLoteHandler(blockchainService *services.BlockchainService, blockchainWebsocketService *services.BlockchainWebsocketService) *LoteHandler {
 	return &LoteHandler{
-		blockchainService: blockchainService,
+		blockchainService:          blockchainService,
+		blockchainWebsocketService: blockchainWebsocketService,
 	}
 }
 
@@ -54,6 +57,8 @@ func (h *LoteHandler) CrearLote(c *gin.Context) {
 		})
 		return
 	}
+	fmt.Println("deploying contract at:", contractAddress)
+	go h.blockchainWebsocketService.StartBlockchainWebsocket(contractAddress)
 
 	response := models.ContractDeployResponse{
 		ContractAddress: contractAddress,
@@ -63,7 +68,7 @@ func (h *LoteHandler) CrearLote(c *gin.Context) {
 
 	c.JSON(http.StatusOK, models.Response{
 		Success: true,
-		Message: "Lote creado exitosamente",
+		Message: "Lote creado exitosamente con socket",
 		Data:    response,
 		TxHash:  txHash,
 	})
@@ -152,6 +157,65 @@ func (h *LoteHandler) TransferirCustodia(c *gin.Context) {
 	})
 }
 
+// CrearNuevoLote maneja la creación de un nuevo lote en un contrato existente
+func (h *LoteHandler) CrearNuevoLote(c *gin.Context) {
+	var req models.CrearNuevoLoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Datos de entrada inválidos: " + err.Error(),
+		})
+		return
+	}
+
+	// Validar que la clave privada no esté vacía
+	if req.PrivateKey == "" {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "La clave privada es requerida",
+		})
+		return
+	}
+
+	// Validar formato de dirección del contrato
+	if len(req.ContractAddress) != 42 || req.ContractAddress[:2] != "0x" {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Formato de dirección de contrato inválido",
+		})
+		return
+	}
+
+	// Crear nuevo lote en el contrato existente
+	txHash, err := h.blockchainService.CrearNuevoLote(
+		req.PrivateKey,
+		req.ContractAddress,
+		req.LoteID,
+		req.TemperaturaMin,
+		req.TemperaturaMax,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{
+			Success: false,
+			Message: "Error creando nuevo lote: " + err.Error(),
+		})
+		return
+	}
+
+	response := map[string]interface{}{
+		"contractAddress": req.ContractAddress,
+		"loteId":          req.LoteID,
+		"txHash":          txHash,
+	}
+
+	c.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "Nuevo lote creado exitosamente en contrato existente",
+		Data:    response,
+		TxHash:  txHash,
+	})
+}
+
 // HealthCheck endpoint para verificar el estado del servicio
 func (h *LoteHandler) HealthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, models.Response{
@@ -164,7 +228,7 @@ func (h *LoteHandler) HealthCheck(c *gin.Context) {
 func (h *LoteHandler) ObtenerLote(c *gin.Context) {
 	// Obtener la dirección del contrato desde los parámetros de la URL
 	contractAddress := c.Param("contractAddress")
-	
+
 	if contractAddress == "" {
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
@@ -225,7 +289,7 @@ func (h *LoteHandler) VerificarConexion(c *gin.Context) {
 func (h *LoteHandler) ObtenerCadenaBlockchain(c *gin.Context) {
 	// Obtener la dirección del contrato desde los parámetros de la URL
 	contractAddress := c.Param("contractAddress")
-	
+
 	if contractAddress == "" {
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,
@@ -314,7 +378,7 @@ func (h *LoteHandler) DecodificarInputDataEspecifico(c *gin.Context) {
 // ObtenerSignaturesFunciones retorna todas las signatures de funciones del contrato
 func (h *LoteHandler) ObtenerSignaturesFunciones(c *gin.Context) {
 	signatures := utils.GetFunctionSignatures()
-	
+
 	c.JSON(http.StatusOK, models.Response{
 		Success: true,
 		Message: "Signatures de funciones obtenidas exitosamente",
@@ -326,7 +390,7 @@ func (h *LoteHandler) ObtenerSignaturesFunciones(c *gin.Context) {
 func (h *LoteHandler) DiagnosticarContrato(c *gin.Context) {
 	// Obtener la dirección del contrato desde los parámetros de la URL
 	contractAddress := c.Param("contractAddress")
-	
+
 	if contractAddress == "" {
 		c.JSON(http.StatusBadRequest, models.Response{
 			Success: false,

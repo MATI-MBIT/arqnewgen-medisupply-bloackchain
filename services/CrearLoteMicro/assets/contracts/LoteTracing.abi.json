@@ -40,6 +40,12 @@
         "internalType": "bool",
         "name": "comprometido",
         "type": "bool"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "motivo",
+        "type": "string"
       }
     ],
     "name": "CustodiaTransferida",
@@ -108,6 +114,12 @@
         "internalType": "int8",
         "name": "temperaturaMaxima",
         "type": "int8"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "motivo",
+        "type": "string"
       }
     ],
     "name": "LoteCreado",
@@ -124,6 +136,29 @@
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "_loteId",
+        "type": "string"
+      },
+      {
+        "internalType": "int8",
+        "name": "_tempMin",
+        "type": "int8"
+      },
+      {
+        "internalType": "int8",
+        "name": "_tempMax",
+        "type": "int8"
+      }
+    ],
+    "name": "crearNuevoLote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

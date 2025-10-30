@@ -32,6 +32,18 @@ type DamageDetails struct {
 	MqttTopic   string  `json:"mqttTopic"`
 }
 
+type LoteInfo struct {
+	LoteID            string `json:"loteId"`
+	Fabricante        string `json:"fabricante"`
+	PropietarioActual string `json:"propietarioActual"`
+	TemperaturaMinima int8   `json:"temperaturaMinima"`
+	TemperaturaMaxima int8   `json:"temperaturaMaxima"`
+	TempRegMinima     int8   `json:"tempRegMinima"`
+	TempRegMaxima     int8   `json:"tempRegMaxima"`
+	Comprometido      bool   `json:"comprometido"`
+	ContractAddress   string `json:"contractAddress"`
+}
+
 // Publisher wraps a Kafka writer.
 type Publisher struct {
 	writer *kafka.Writer

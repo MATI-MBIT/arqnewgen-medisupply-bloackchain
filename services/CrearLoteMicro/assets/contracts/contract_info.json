@@ -2,9 +2,9 @@
   "contractName": "LoteTracing",
   "version": "1.0.0",
   "compiler": "solc-0.8.28",
-  "lastUpdated": "2025-10-26",
+  "lastUpdated": "2025-10-29",
   "source": "smartcontract/lotetracing/artifacts/contracts/LoteTracing.sol/LoteTracing.json",
-  "hash": "0x21cabae07b5a6eaf4cedf7e21004e63073c4f7a68764736f6c634300081c0033",
+  "hash": "0xd1a4266ec727c6761d7962e584617b08993536f14864736f6c634300081c0033",
   "description": "Smart contract para trazabilidad de lotes con control de temperatura",
   "features": [
     "Registro de temperaturas",

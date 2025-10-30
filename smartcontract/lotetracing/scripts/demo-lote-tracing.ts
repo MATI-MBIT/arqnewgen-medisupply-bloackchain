@@ -172,9 +172,9 @@ try {
   console.log(`   🌡️  Rango registrado: 10°C - 15°C (no incluye rango del contrato)`);
   console.log(`   ❌ Lote marcado como comprometido: ${comprometidoFinal}`);
 
-  // Try to register another temperature range (should fail)
+  // Try to register another temperature range (should succeed since validation is disabled)
   console.log(
-    "\n9. 🚫 Intento de registrar rango en lote comprometido..."
+    "\n9. 🔄 Registro de rango en lote comprometido (validación deshabilitada)..."
   );
   try {
     const hash2 = await farmacia.writeContract({
@@ -184,8 +184,9 @@ try {
       args: [TEMP_MIN, TEMP_MAX],
     });
     await publicClient.waitForTransactionReceipt({ hash: hash2 });
+    console.log(`   ✅ Registro permitido: Validación de lote comprometido deshabilitada`);
   } catch (error) {
-    console.log(`   ✅ Registro rechazado correctamente: Lote ya comprometido`);
+    console.log(`   ❌ Error inesperado: ${error instanceof Error ? error.message : String(error)}`);
   }
 } catch (error) {
   console.log(
@@ -195,9 +196,39 @@ try {
   );
 }
 
+// 10. Demonstrate new lot creation functionality
+console.log("\n10. 🆕 Demostración: Creación de nuevo lote...");
+const NEW_LOTE_ID = "INS-2024-11-001";
+const NEW_TEMP_MIN = -5;
+const NEW_TEMP_MAX = 15;
+
+console.log(`   📦 Creando nuevo lote: ${NEW_LOTE_ID}`);
+console.log(`   🌡️  Nuevo rango: ${NEW_TEMP_MIN}°C - ${NEW_TEMP_MAX}°C`);
+
+const newLoteHash = await farmacia.writeContract({
+  address: lote.address,
+  abi: lote.abi,
+  functionName: "crearNuevoLote",
+  args: [NEW_LOTE_ID, NEW_TEMP_MIN, NEW_TEMP_MAX],
+});
+await publicClient.waitForTransactionReceipt({ hash: newLoteHash });
+
+// Verify new lot state
+const nuevoLoteId = await lote.read.loteId();
+const nuevaTempMin = await lote.read.temperaturaMinima();
+const nuevaTempMax = await lote.read.temperaturaMaxima();
+const nuevoComprometido = await lote.read.comprometido();
+const nuevoPropietario = await lote.read.propietarioActual();
+
+console.log(`   ✅ Nuevo lote creado exitosamente:`);
+console.log(`      - ID: ${nuevoLoteId}`);
+console.log(`      - Rango: ${nuevaTempMin}°C - ${nuevaTempMax}°C`);
+console.log(`      - Estado: ${nuevoComprometido ? "Comprometido" : "Íntegro"}`);
+console.log(`      - Propietario: ${nuevoPropietario}`);
+
 console.log("\n=== Demo completado exitosamente ===");
 console.log(
-  `🎉 El lote ${LOTE_ID} ha sido trazado desde fabricación hasta farmacia`
+  `🎉 El lote ${LOTE_ID} ha sido trazado y reinicializado como ${NEW_LOTE_ID}`
 );
 console.log(`📍 Dirección del contrato: ${lote.address}`);
 console.log(`🔍 Funcionalidades demostradas:`);
@@ -205,5 +236,6 @@ console.log(`   - ✅ Creación de lote con parámetros de temperatura`);
 console.log(`   - ✅ Registro de rangos de temperatura por cualquier usuario`);
 console.log(`   - ✅ Transferencia de custodia entre actores`);
 console.log(`   - ✅ Validación de rangos contra temperaturas del contrato`);
-console.log(`   - ✅ Prevención de registros en lotes comprometidos`);
+console.log(`   - ✅ Registro permitido en lotes comprometidos (validación deshabilitada)`);
 console.log(`   - ✅ Control de acceso para transferencia de custodia`);
+console.log(`   - ✅ Creación de nuevo lote con parámetros diferentes`);

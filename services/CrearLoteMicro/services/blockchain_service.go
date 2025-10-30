@@ -242,6 +242,69 @@ func (bs *BlockchainService) TransferirCustodia(privateKeyHex, contractAddress, 
 	return signedTx.Hash().Hex(), nil
 }
 
+func (bs *BlockchainService) CrearNuevoLote(privateKeyHex, contractAddress, loteID string, tempMin, tempMax int8) (string, error) {
+	// Parsear la clave privada
+	privateKey, err := crypto.HexToECDSA(privateKeyHex)
+	if err != nil {
+		return "", fmt.Errorf("error parseando clave privada: %v", err)
+	}
+
+	// Obtener la dirección pública
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		return "", fmt.Errorf("error obteniendo clave pública")
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
+
+	// Obtener nonce
+	nonce, err := bs.Client.PendingNonceAt(context.Background(), fromAddress)
+	if err != nil {
+		return "", fmt.Errorf("error obteniendo nonce: %v", err)
+	}
+
+	// Configurar gas
+	gasPrice, err := bs.Client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return "", fmt.Errorf("error obteniendo gas price: %v", err)
+	}
+
+	// Parsear ABI
+	parsedABI, err := abi.JSON(strings.NewReader(getContractABI()))
+	if err != nil {
+		return "", fmt.Errorf("error parseando ABI: %v", err)
+	}
+
+	// Preparar datos de la función crearNuevoLote
+	data, err := parsedABI.Pack("crearNuevoLote", loteID, tempMin, tempMax)
+	if err != nil {
+		return "", fmt.Errorf("error empaquetando datos de la función: %v", err)
+	}
+
+	// Crear transacción
+	toAddress := common.HexToAddress(contractAddress)
+	tx := types.NewTransaction(nonce, toAddress, big.NewInt(0), 300000, gasPrice, data)
+
+	// Firmar transacción
+	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(bs.chainID), privateKey)
+	if err != nil {
+		return "", fmt.Errorf("error firmando transacción: %v", err)
+	}
+
+	// Enviar transacción
+	err = bs.Client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		return "", fmt.Errorf("error enviando transacción: %v", err)
+	}
+
+	fmt.Printf("[DEBUG] CrearNuevoLote completado:\n")
+	fmt.Printf("[DEBUG] - Contract Address: %s\n", contractAddress)
+	fmt.Printf("[DEBUG] - Lote ID: %s\n", loteID)
+	fmt.Printf("[DEBUG] - Transaction Hash: %s\n", signedTx.Hash().Hex())
+
+	return signedTx.Hash().Hex(), nil
+}
+
 func (bs *BlockchainService) ObtenerInfoLote(contractAddress string) (*models.LoteInfoResponse, error) {
 	fmt.Printf("[DEBUG] Iniciando ObtenerInfoLote para dirección: %s\n", contractAddress)
 	
