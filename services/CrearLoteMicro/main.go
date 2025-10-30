@@ -51,6 +51,7 @@ func main() {
 		lote := api.Group("/lote")
 		{
 			lote.POST("/crear", loteHandler.CrearLote)
+			lote.POST("/nuevo", loteHandler.CrearNuevoLote)
 			lote.POST("/temperatura", loteHandler.RegistrarTemperatura)
 			lote.POST("/transferir", loteHandler.TransferirCustodia)
 			lote.GET("/info/:contractAddress", loteHandler.ObtenerLote)

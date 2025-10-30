@@ -26,6 +26,15 @@ type TransferirCustodiaRequest struct {
 	PrivateKey        string `json:"privateKey" binding:"required"`
 }
 
+// CrearNuevoLoteRequest representa la solicitud para crear un nuevo lote en un contrato existente
+type CrearNuevoLoteRequest struct {
+	ContractAddress string `json:"contractAddress" binding:"required"`
+	LoteID          string `json:"loteId" binding:"required"`
+	TemperaturaMin  int8   `json:"temperaturaMin" binding:"required"`
+	TemperaturaMax  int8   `json:"temperaturaMax" binding:"required"`
+	PrivateKey      string `json:"privateKey" binding:"required"`
+}
+
 // Response representa una respuesta genérica de la API
 type Response struct {
 	Success bool        `json:"success"`

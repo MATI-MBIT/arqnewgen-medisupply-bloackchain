@@ -157,6 +157,65 @@ func (h *LoteHandler) TransferirCustodia(c *gin.Context) {
 	})
 }
 
+// CrearNuevoLote maneja la creación de un nuevo lote en un contrato existente
+func (h *LoteHandler) CrearNuevoLote(c *gin.Context) {
+	var req models.CrearNuevoLoteRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Datos de entrada inválidos: " + err.Error(),
+		})
+		return
+	}
+
+	// Validar que la clave privada no esté vacía
+	if req.PrivateKey == "" {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "La clave privada es requerida",
+		})
+		return
+	}
+
+	// Validar formato de dirección del contrato
+	if len(req.ContractAddress) != 42 || req.ContractAddress[:2] != "0x" {
+		c.JSON(http.StatusBadRequest, models.Response{
+			Success: false,
+			Message: "Formato de dirección de contrato inválido",
+		})
+		return
+	}
+
+	// Crear nuevo lote en el contrato existente
+	txHash, err := h.blockchainService.CrearNuevoLote(
+		req.PrivateKey,
+		req.ContractAddress,
+		req.LoteID,
+		req.TemperaturaMin,
+		req.TemperaturaMax,
+	)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, models.Response{
+			Success: false,
+			Message: "Error creando nuevo lote: " + err.Error(),
+		})
+		return
+	}
+
+	response := map[string]interface{}{
+		"contractAddress": req.ContractAddress,
+		"loteId":          req.LoteID,
+		"txHash":          txHash,
+	}
+
+	c.JSON(http.StatusOK, models.Response{
+		Success: true,
+		Message: "Nuevo lote creado exitosamente en contrato existente",
+		Data:    response,
+		TxHash:  txHash,
+	})
+}
+
 // HealthCheck endpoint para verificar el estado del servicio
 func (h *LoteHandler) HealthCheck(c *gin.Context) {
 	c.JSON(http.StatusOK, models.Response{

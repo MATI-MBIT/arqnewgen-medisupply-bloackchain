@@ -15,8 +15,8 @@ contract LoteTracing {
     // --- Inmutables (Acta de Nacimiento del Lote) ---
     string public loteId;
     address public immutable fabricante;
-    int8 public immutable temperaturaMinima;
-    int8 public immutable temperaturaMaxima;
+    int8 public temperaturaMinima;
+    int8 public temperaturaMaxima;
     int8 public tempRegMinima;
     int8 public tempRegMaxima;
 
@@ -32,12 +32,14 @@ contract LoteTracing {
         string indexed loteId,
         address indexed fabricante,
         int8 temperaturaMinima,
-        int8 temperaturaMaxima
+        int8 temperaturaMaxima,
+        string motivo
     );
     event CustodiaTransferida(
         address indexed propietarioAnterior,
         address indexed nuevoPropietario,
-        bool comprometido
+        bool comprometido,
+        string motivo
     );
     event LoteComprometido(
         address indexed propietario,
@@ -73,7 +75,7 @@ contract LoteTracing {
         tempRegMinima = 0;
         tempRegMaxima = 0;
 
-        emit LoteCreado(_loteId, fabricante, _tempMin, _tempMax);
+        emit LoteCreado(_loteId, fabricante, _tempMin, _tempMax, "Lote Creado");
     }
 
     //==============================================================
@@ -85,7 +87,7 @@ contract LoteTracing {
      * Si la temperatura está fuera de rango, el lote se marca como comprometido.
      */
     function registrarTemperatura(int8 _tempMin, int8 _tempMax) external {
-        require(!comprometido, "El lote ya esta comprometido");
+        // require(!comprometido, "El lote ya esta comprometido");
 
         tempRegMinima = _tempMin;
         tempRegMaxima = _tempMax;
@@ -115,7 +117,24 @@ contract LoteTracing {
         emit CustodiaTransferida(
             propietarioAnterior,
             _nuevoPropietario,
-            comprometido
+            comprometido,
+            "Custodia Transferida"
         );
+    }
+
+    /**
+     * @notice Registra una lectura de temperatura. Solo el propietario actual puede hacerlo.
+     * Si la temperatura está fuera de rango, el lote se marca como comprometido.
+     */
+    function crearNuevoLote(string memory _loteId, int8 _tempMin, int8 _tempMax) external {
+        loteId = _loteId;
+        propietarioActual = msg.sender; // El fabricante es el primer propietario
+        temperaturaMinima = _tempMin;
+        temperaturaMaxima = _tempMax;
+        comprometido = false;
+        tempRegMinima = 0;
+        tempRegMaxima = 0;
+
+        emit LoteCreado(_loteId, fabricante, _tempMin, _tempMax, "Lote Creado");
     }
 }

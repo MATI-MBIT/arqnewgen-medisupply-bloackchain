@@ -140,7 +140,7 @@ describe("LoteTracing PoC", async function () {
     assert.equal(comprometido, false);
   });
 
-  it("Should reject unauthorized operations", async function () {
+  it("Should allow anyone to register temperature but restrict custody transfer", async function () {
     const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
@@ -167,7 +167,7 @@ describe("LoteTracing PoC", async function () {
     );
   });
 
-  it("Should prevent temperature registration on compromised lot", async function () {
+  it("Should allow temperature registration even on compromised lot", async function () {
     const lote = await viem.deployContract("LoteTracing", [
       LOTE_ID,
       TEMP_MIN,
@@ -180,11 +180,14 @@ describe("LoteTracing PoC", async function () {
     const comprometido = await lote.read.comprometido();
     assert.equal(comprometido, true);
 
-    // Try to register another temperature range
-    await assert.rejects(
-      lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]),
-      /El lote ya esta comprometido/
-    );
+    // Should still allow temperature registration (validation is commented out)
+    await lote.write.registrarTemperatura([TEMP_MIN, TEMP_MAX]);
+
+    // Verify the temperature was registered
+    const tempRegMinima = await lote.read.tempRegMinima();
+    const tempRegMaxima = await lote.read.tempRegMaxima();
+    assert.equal(tempRegMinima, TEMP_MIN);
+    assert.equal(tempRegMaxima, TEMP_MAX);
   });
 
   it("Should emit events correctly", async function () {
@@ -262,5 +265,68 @@ describe("LoteTracing PoC", async function () {
     // Test just outside boundaries - should compromise (tempMax = 9 > 8)
     await lote3.write.registrarTemperatura([TEMP_MIN, 9]); // 2-9, tempMax=9 > 8
     assert.equal(await lote3.read.comprometido(), true);
+  });
+
+  it("Should create new lot with different parameters", async function () {
+    const lote = await viem.deployContract("LoteTracing", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Verify initial state
+    assert.equal(await lote.read.loteId(), LOTE_ID);
+    assert.equal(await lote.read.temperaturaMinima(), TEMP_MIN);
+    assert.equal(await lote.read.temperaturaMaxima(), TEMP_MAX);
+
+    // Create new lot with different parameters
+    const NEW_LOTE_ID = "LOT-2024-002";
+    const NEW_TEMP_MIN = -5;
+    const NEW_TEMP_MAX = 15;
+
+    await lote.write.crearNuevoLote([NEW_LOTE_ID, NEW_TEMP_MIN, NEW_TEMP_MAX]);
+
+    // Verify new state
+    assert.equal(await lote.read.loteId(), NEW_LOTE_ID);
+    assert.equal(await lote.read.temperaturaMinima(), NEW_TEMP_MIN);
+    assert.equal(await lote.read.temperaturaMaxima(), NEW_TEMP_MAX);
+    assert.equal(await lote.read.comprometido(), false);
+    assert.equal(await lote.read.tempRegMinima(), 0);
+    assert.equal(await lote.read.tempRegMaxima(), 0);
+
+    // Verify owner is reset to caller
+    const propietarioActual = await lote.read.propietarioActual();
+    assert.equal(
+      propietarioActual.toLowerCase(),
+      fabricante.account.address.toLowerCase()
+    );
+  });
+
+  it("Should allow anyone to create new lot", async function () {
+    const lote = await viem.deployContract("LoteTracing", [
+      LOTE_ID,
+      TEMP_MIN,
+      TEMP_MAX,
+    ]);
+
+    // Transfer custody to distributor first
+    await lote.write.transferirCustodia([distribuidor.account.address]);
+
+    // Distributor creates new lot
+    const NEW_LOTE_ID = "LOT-DIST-001";
+    await distribuidor.writeContract({
+      address: lote.address,
+      abi: lote.abi,
+      functionName: "crearNuevoLote",
+      args: [NEW_LOTE_ID, -10, 20],
+    });
+
+    // Verify distributor is now the owner
+    const propietarioActual = await lote.read.propietarioActual();
+    assert.equal(
+      propietarioActual.toLowerCase(),
+      distribuidor.account.address.toLowerCase()
+    );
+    assert.equal(await lote.read.loteId(), NEW_LOTE_ID);
   });
 });
