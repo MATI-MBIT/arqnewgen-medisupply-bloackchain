@@ -204,7 +204,7 @@ func startHTTPServer(port string) {
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":    "healthy",
-			"service":   "mqtt-order-event-client",
+			"service":   "mqtt-order-event-client-v3",
 			"timestamp": time.Now(),
 		})
 	})
@@ -281,11 +281,25 @@ func startHTTPServer(port string) {
 			return
 		}
 		log.Printf("LoteInfo recibido: loteId=%s, contractAddress=%s, comprometido=%t", payload.LoteID, payload.ContractAddress, payload.Comprometido)
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "LoteInfo recibido",
-			"loteId":  payload.LoteID,
-		})
+		{
+			log.Printf("Publishing order damage event for contract Address id=%s", payload.ContractAddress)
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			if err := orderPublisher.PublishOrderDamageFromSensor(
+				ctx,
+				payload.LoteID,
+				payload.ContractAddress,
+				float64(payload.TempRegMinima),
+				float64(payload.TempRegMaxima),
+				"comprometido",
+				payload.LoteID,
+			); err != nil {
+				log.Printf("Error publishing order damage event: %v", err)
+			} else {
+				log.Printf("Order damage event published for sensor/order id=%s", payload.LoteID)
+			}
+		}
+		c.JSON(http.StatusOK, gin.H{"message": "Order damage event published for sensor/order id=" + payload.LoteID})
 	})
 
 	// Start server
@@ -311,7 +325,7 @@ var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 	log.Printf("Event stored: ID=%s, Type=%s, Source=%s, Temp=%.2f°C, Humidity=%.2f%%",
 		event.ID, event.Type, event.Source, event.Data.Temperature, event.Data.Humidity)
 	// Publish order damage event to Kafka after logging and storing
-	if event.Data.Temperature < minTemperature {
+	/* 	if event.Data.Temperature < minTemperature {
 		log.Printf("Publishing order damage event for sensor/order id=%s", event.ID)
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 		defer cancel()
@@ -328,7 +342,7 @@ var messageHandler mqtt.MessageHandler = func(client mqtt.Client, msg mqtt.Messa
 		} else {
 			log.Printf("Order damage event published for sensor/order id=%s", event.ID)
 		}
-	}
+	} */
 }
 
 // MQTT connection handler
