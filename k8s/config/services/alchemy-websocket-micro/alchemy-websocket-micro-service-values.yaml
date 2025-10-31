@@ -1,0 +1,245 @@
+# ============================================================================
+# CONFIGURACIÓN PARA ALCHEMY WEBSOCKET MICRO SERVICE
+# ============================================================================
+# Microservicio en Go para conexiones WebSocket con Alchemy Ethereum API
+#
+# VARIABLES DE ENTORNO GENERADAS:
+# - ALCHEMY_API_KEY: API key para Alchemy (desde blockchain-secrets)
+# - ALCHEMY_WS_URL: wss://eth-sepolia.g.alchemy.com/v2
+# - PORT: 8081
+# - POD_NAME: {metadata.name}
+# - POD_NAMESPACE: {metadata.namespace}
+#
+# INSTALACIÓN:
+# helm install alchemy-websocket-micro ./k8s/microservice -f config/services/alchemy-websocket-micro/alchemy-websocket-micro-service-values.yaml
+#
+# ACTUALIZACIÓN:
+# helm upgrade alchemy-websocket-micro ./k8s/microservice -f config/services/alchemy-websocket-micro/alchemy-websocket-micro-service-values.yaml
+# ============================================================================
+
+replicaCount: 1
+
+image:
+  repository: alchemy-websocket-micro
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Configuración del servicio Kubernetes
+service:
+  type: ClusterIP
+  port: 8081
+  targetPort: 8081
+
+# ============================================================================
+# CONFIGURACIÓN ESPECÍFICA DE LA APLICACIÓN
+# ============================================================================
+# Estas variables se convierten en variables de entorno
+app:
+  config:
+    # HTTP Server Configuration
+    PORT: "8081"
+    # Alchemy WebSocket URL
+    ALCHEMY_WS_URL: "wss://eth-sepolia.g.alchemy.com/v2"
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations:
+  sidecar.istio.io/inject: "true"
+
+podSecurityContext: {}
+securityContext: {}
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 256Mi
+  requests:
+    cpu: 100m
+    memory: 128Mi
+
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 3
+  targetCPUUtilizationPercentage: 80
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+# Health checks
+livenessProbe:
+  enabled: true
+  httpGet:
+    path: /api/v1/health
+    port: 8081
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  timeoutSeconds: 10
+  failureThreshold: 3
+
+readinessProbe:
+  enabled: true
+  httpGet:
+    path: /api/v1/health
+    port: 8081
+  initialDelaySeconds: 30
+  periodSeconds: 15
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+# ============================================================================
+# VARIABLES DE ENTORNO ADICIONALES
+# ============================================================================
+env:
+  # Variables comunes (incluidas automáticamente)
+  common:
+    - name: POD_NAME
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.name
+    - name: POD_NAMESPACE
+      valueFrom:
+        fieldRef:
+          fieldPath: metadata.namespace
+  # Variables personalizadas adicionales - Blockchain secrets (reusing existing)
+  custom:
+    # Alchemy API Key extracted from WebSocket URL
+    - name: ALCHEMY_API_KEY
+      valueFrom:
+        secretKeyRef:
+          name: blockchain-secrets
+          key: alchemy-api-key
+
+# ============================================================================
+# CONFIGURACIÓN DE BLOCKCHAIN (REUSING EXISTING SECRETS)
+# ============================================================================
+blockchain:
+  # Ethereum Sepolia network configuration
+  network: "sepolia"
+  chainId: 11155111
+  # Secret configuration for blockchain endpoints (shared with crear-lote-micro)
+  secretName: "blockchain-secrets"
+  apiKeySecretKey: "alchemy-api-key"
+  # WebSocket URL (can be overridden via app.config.ALCHEMY_WS_URL)
+  wsUrl: "wss://eth-sepolia.g.alchemy.com/v2"
+
+# ============================================================================
+# CARACTERÍSTICAS DESHABILITADAS PARA ESTE MICROSERVICIO
+# ============================================================================
+configMap:
+  enabled: false
+
+secret:
+  enabled: true
+  name: "blockchain-secrets"
+  data:
+    # These values should be created manually or via CI/CD (shared with crear-lote-micro)
+    # sepolia-rpc: <base64-encoded-rpc-endpoint>
+    # sepolia-ws: <base64-encoded-ws-endpoint>
+    # alchemy-api-key: <base64-encoded-alchemy-api-key>
+
+ingress:
+  enabled: false
+
+# ============================================================================
+# CONFIGURACIÓN DE ISTIO SERVICE MESH
+# ============================================================================
+istio:
+  enabled: true
+  labels:
+    app: alchemy-websocket-micro
+    version: v1
+
+  # Virtual Service configuration (if needed)
+  virtualService:
+    enabled: false
+    hosts: []
+    gateways: []
+
+  # Destination Rule configuration (if needed)
+  destinationRule:
+    enabled: false
+
+# ============================================================================
+# CONFIGURACIÓN DE MONITOREO Y OBSERVABILIDAD
+# ============================================================================
+monitoring:
+  # Prometheus metrics
+  prometheus:
+    enabled: true
+    port: 9090
+    path: /metrics
+
+  # Service monitor for Prometheus operator
+  serviceMonitor:
+    enabled: false
+    labels: {}
+    interval: 30s
+
+# ============================================================================
+# CONFIGURACIÓN DE PERSISTENCIA (SI SE NECESITA EN EL FUTURO)
+# ============================================================================
+persistence:
+  enabled: false
+  # storageClass: ""
+  # accessMode: ReadWriteOnce
+  # size: 1Gi
+
+# ============================================================================
+# CONFIGURACIÓN DE NETWORKING
+# ============================================================================
+networking:
+  # Network policies (if needed)
+  networkPolicy:
+    enabled: false
+    ingress: []
+    egress: []
+
+# ============================================================================
+# CONFIGURACIÓN DE DESARROLLO Y DEBUG
+# ============================================================================
+debug:
+  enabled: true
+  logLevel: "DEBUG"
+
+# ============================================================================
+# CONFIGURACIÓN DE BACKUP Y RECOVERY (PARA FUTURO USO)
+# ============================================================================
+backup:
+  enabled: false
+
+# ============================================================================
+# CONFIGURACIÓN DE TESTING
+# ============================================================================
+testing:
+  enabled: false
+  image:
+    repository: curlimages/curl
+    tag: latest
+
+# ============================================================================
+# ANOTACIONES Y ETIQUETAS ADICIONALES
+# ============================================================================
+additionalLabels:
+  component: alchemy-websocket-micro
+  tier: backend
+  framework: go
+  blockchain: ethereum
+  network: sepolia
+  api-provider: alchemy
+
+additionalAnnotations:
+  description: "Alchemy WebSocket Micro Service - Ethereum WebSocket API Integration"
+  version: "1.0.0"
+  maintainer: "platform-team"
+  blockchain.network: "sepolia"
+  blockchain.chainId: "11155111"
+  api.provider: "alchemy"

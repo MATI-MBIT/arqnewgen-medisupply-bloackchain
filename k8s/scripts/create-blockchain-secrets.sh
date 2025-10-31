@@ -49,10 +49,17 @@ if [[ -z "$SEPOLIA_WS" ]]; then
     exit 1
 fi
 
+read -p "Alchemy API Key (e.g., YOUR_ALCHEMY_API_KEY): " ALCHEMY_API_KEY
+if [[ -z "$ALCHEMY_API_KEY" ]]; then
+    echo -e "${RED}Error: Alchemy API Key is required${NC}"
+    exit 1
+fi
+
 echo
 echo -e "${YELLOW}Creating secret with the following values:${NC}"
 echo "SEPOLIA_RPC: ${SEPOLIA_RPC:0:50}..."
 echo "SEPOLIA_WS: ${SEPOLIA_WS:0:50}..."
+echo "ALCHEMY_API_KEY: ${ALCHEMY_API_KEY:0:10}..."
 echo
 
 # Delete existing secret if needed
@@ -66,13 +73,17 @@ echo -e "${YELLOW}Creating secret...${NC}"
 kubectl create secret generic $SECRET_NAME \
     --from-literal=sepolia-rpc="$SEPOLIA_RPC" \
     --from-literal=sepolia-ws="$SEPOLIA_WS" \
+    --from-literal=alchemy-api-key="$ALCHEMY_API_KEY" \
     -n $NAMESPACE
 
 if [[ $? -eq 0 ]]; then
     echo -e "${GREEN}✓ Secret $SECRET_NAME created successfully in namespace $NAMESPACE${NC}"
     echo
-    echo -e "${YELLOW}You can now deploy the crear-lote-micro service:${NC}"
+    echo -e "${YELLOW}You can now deploy blockchain services:${NC}"
+    echo "# Deploy crear-lote-micro:"
     echo "helm install crear-lote-micro ./k8s/microservice -f k8s/config/services/crear-lote-micro/crear-lote-micro-service-values.yaml -n $NAMESPACE"
+    echo "# Deploy alchemy-websocket-micro:"
+    echo "helm install alchemy-websocket-micro ./k8s/microservice -f k8s/config/services/alchemy-websocket-micro/alchemy-websocket-micro-service-values.yaml -n $NAMESPACE"
 else
     echo -e "${RED}✗ Failed to create secret${NC}"
     exit 1
