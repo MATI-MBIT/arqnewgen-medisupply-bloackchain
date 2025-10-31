@@ -5,7 +5,7 @@ CLUSTER_NAME := local-k8s
 KUBECONFIG_PATH := ~/.kube/config
 PROVIDER := $(or $(PROVIDER),kind)
 
-.PHONY: help init deploy clean destroy kiali kafka-ui mqtt rabbitmq kafka-rabbitmq-replicator kafka-rabbitmq-replicator-logs kafka-rabbitmq-replicator-status create-kafka-topics wait-for-kafka create-topic-if-not-exists create-rabbitmq-resources wait-for-rabbitmq
+.PHONY: help init deploy clean destroy kiali kafka-ui mqtt rabbitmq kafka-rabbitmq-replicator kafka-rabbitmq-replicator-logs kafka-rabbitmq-replicator-status create-kafka-topics wait-for-kafka create-topic-if-not-exists create-rabbitmq-resources wait-for-rabbitmq check-and-create-secrets create-blockchain-secrets
 
 help: ## Mostrar ayuda
 	@echo "Comandos disponibles:"
@@ -21,6 +21,10 @@ help: ## Mostrar ayuda
 	@echo "  order-gateway          - Configurar Istio Gateway para Order Service"
 	@echo "  clean                  - Eliminar charts del cluster"
 	@echo "  destroy                - Eliminar cluster completamente"
+	@echo ""
+	@echo "🔐 Secret Management:"
+	@echo "  create-secrets-interactive - Crear secretos de forma interactiva"
+	@echo "  create-blockchain-secrets  - Crear secretos blockchain para crear-lote-micro"
 	@echo ""
 	@echo "🔄 Arquitectura desplegada:"
 	@echo "  Flujo Principal: MQTT → Kafka (Principal)"
@@ -117,6 +121,9 @@ endif
 		--namespace istio-system \
 		--set profile=demo \
 		--wait
+
+# 	@kubectl apply -f config/istio/kiali.yaml --wait
+	@kubectl apply -f config/istio/mtls.yaml --wait
 	
 	@echo "⚡ Desplegando KEDA..."
 	@helm upgrade --install keda ./keda \
@@ -270,6 +277,26 @@ deploy:
 	@echo "  make mqtt        # EMQX en http://localhost:18083"
 	@echo "  make rabbitmq    # RabbitMQ en http://localhost:15672"
 	@echo ""
+
+deploy-service: ## Deploy a service with Istio injection (usage: make deploy-service SERVICE=auth NAMESPACE=default IMAGE_TAG=v1.0.0)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "❌ Error: Debes especificar SERVICE=<nombre>"; \
+		echo "Ejemplo: make deploy-service SERVICE=auth NAMESPACE=default IMAGE_TAG=v1.0.0"; \
+		exit 1; \
+	fi
+	@echo "🚀 Desplegando servicio $(SERVICE)..."
+	@$(MAKE) check-and-create-secrets SERVICE=$(SERVICE) NAMESPACE=$(or $(NAMESPACE),default)
+	@./deploy-service.sh $(SERVICE) $(or $(NAMESPACE),default) $(or $(RELEASE),$(SERVICE)) $(or $(IMAGE_TAG),latest)
+
+build-deploy-service: ## Build, load and deploy a service (usage: make build-deploy-service SERVICE=auth IMAGE_TAG=v1.0.0)
+	@if [ -z "$(SERVICE)" ]; then \
+		echo "❌ Error: Debes especificar SERVICE=<nombre>"; \
+		echo "Ejemplo: make build-deploy-service SERVICE=auth IMAGE_TAG=v1.0.0"; \
+		exit 1; \
+	fi
+	@echo "🔨 Building and deploying $(SERVICE) with tag $(or $(IMAGE_TAG),latest)..."
+	@$(MAKE) -C ../services build-load SERVICE=$(SERVICE) IMAGE_TAG=$(or $(IMAGE_TAG),latest)
+	@$(MAKE) deploy-service SERVICE=$(SERVICE) NAMESPACE=$(or $(NAMESPACE),default) IMAGE_TAG=$(or $(IMAGE_TAG),latest)
 
 clean: ## Eliminar charts del cluster
 	@echo "🧹 Eliminando charts del cluster..."
@@ -575,3 +602,50 @@ create-rabbitmq-resources: wait-for-rabbitmq ## Crear exchanges, queues y bindin
 	echo "    • order-events-queue (durable)"; \
 	echo "  🔸 Bindings:"; \
 	echo "    • order-damage-queue ← events [order.damage]"
+
+check-and-create-secrets: ## Check if service needs secrets and create them if necessary
+	@echo "🔐 Checking if $(SERVICE) requires secrets..."
+	@if [ "$(SERVICE)" = "crear-lote-micro" ]; then \
+		echo "🔍 Service $(SERVICE) requires blockchain secrets"; \
+		$(MAKE) create-blockchain-secrets NAMESPACE=$(NAMESPACE); \
+	else \
+		echo "✅ Service $(SERVICE) does not require additional secrets"; \
+	fi
+
+create-blockchain-secrets: ## Create blockchain secrets for crear-lote-micro service
+	@echo "🔐 Creating blockchain secrets for namespace $(NAMESPACE)..."
+	@if kubectl get secret blockchain-secrets -n $(NAMESPACE) >/dev/null 2>&1; then \
+		echo "✅ Secret blockchain-secrets already exists in namespace $(NAMESPACE)"; \
+	else \
+		echo "🔑 Secret blockchain-secrets not found, creating..."; \
+		if [ -f "./scripts/create-blockchain-secrets.sh" ]; then \
+			echo "📋 Using interactive script to create secrets..."; \
+			echo "⚠️  Please run the following command manually to create secrets:"; \
+			echo "   ./k8s/scripts/create-blockchain-secrets.sh $(NAMESPACE)"; \
+			echo ""; \
+			echo "Or create them manually with:"; \
+			echo "   kubectl create secret generic blockchain-secrets \\"; \
+			echo "     --from-literal=sepolia-rpc=\"https://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY\" \\"; \
+			echo "     --from-literal=sepolia-ws=\"wss://eth-sepolia.g.alchemy.com/v2/YOUR_API_KEY\" \\"; \
+			echo "     -n $(NAMESPACE)"; \
+			echo ""; \
+			read -p "Press Enter after creating the secrets to continue..."; \
+		else \
+			echo "❌ Secret creation script not found at ./scripts/create-blockchain-secrets.sh"; \
+			exit 1; \
+		fi; \
+	fi
+
+create-secrets-interactive: ## Interactive secret creation for services that need them
+	@echo "🔐 Interactive secret creation..."
+	@echo "Available services that require secrets:"
+	@echo "  - crear-lote-micro (requires blockchain-secrets)"
+	@echo ""
+	@read -p "Enter service name: " SERVICE_INPUT; \
+	read -p "Enter namespace [default]: " NAMESPACE_INPUT; \
+	NAMESPACE_INPUT=$${NAMESPACE_INPUT:-default}; \
+	if [ "$$SERVICE_INPUT" = "crear-lote-micro" ]; then \
+		./scripts/create-blockchain-secrets.sh $$NAMESPACE_INPUT; \
+	else \
+		echo "❌ Unknown service or service doesn't require secrets: $$SERVICE_INPUT"; \
+	fi
