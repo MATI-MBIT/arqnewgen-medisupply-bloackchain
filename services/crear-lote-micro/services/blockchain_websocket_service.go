@@ -11,11 +11,13 @@ import (
 type BlockchainWebsocketService struct {
 	u                 string
 	blockchainService *BlockchainService
+	damageCaller      *DamageServiceCaller
 }
 
-func NewBlockchainWebsocketService(u string, blockchainService *BlockchainService) *BlockchainWebsocketService {
+func NewBlockchainWebsocketService(u string, blockchainService *BlockchainService, damageCaller *DamageServiceCaller) *BlockchainWebsocketService {
 	return &BlockchainWebsocketService{u: u,
 		blockchainService: blockchainService,
+		damageCaller:      damageCaller,
 	}
 }
 
@@ -76,7 +78,11 @@ func (s *BlockchainWebsocketService) StartBlockchainWebsocket(address string) {
 			if err != nil {
 				log.Println("Error al obtener info del lote:", err)
 			} else {
+				log.Printf("Info del lote: %v", infoLote)
 				if infoLote.Comprometido {
+					if err := s.damageCaller.SendLoteInfo(infoLote); err != nil {
+						log.Printf("Error enviando LoteInfo al damage service: %v", err)
+					}
 					log.Printf("❌ Lote comprometido: loteId:%s, contractAddress:%s, propietarioActual:%s, comprometido:%t", infoLote.LoteID, infoLote.ContractAddress, infoLote.PropietarioActual, infoLote.Comprometido)
 				} else {
 					log.Printf("✅ Lote sin novedades loteId:%s, contractAddress:%s", infoLote.LoteID, infoLote.ContractAddress)

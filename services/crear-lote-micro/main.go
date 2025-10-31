@@ -18,8 +18,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("Error inicializando servicio de blockchain: %v", err)
 	}
+	// Inicializar damage service caller
+	damageCaller := services.NewDamageServiceCaller(cfg.DamageServiceURL)
+
 	// Inicializar servicio de blockchainSocket
-	blockchainWebsocketService := services.NewBlockchainWebsocketService(cfg.SepoliaWS, blockchainService)
+	blockchainWebsocketService := services.NewBlockchainWebsocketService(cfg.SepoliaWS, blockchainService, damageCaller)
 
 	// Inicializar handlers
 	loteHandler := handlers.NewLoteHandler(blockchainService, blockchainWebsocketService)

@@ -9,10 +9,11 @@ import (
 )
 
 type Config struct {
-	SepoliaRPC string
-	Port       string
-	ChainID    int64
-	SepoliaWS  string
+	SepoliaRPC       string
+	Port             string
+	ChainID          int64
+	SepoliaWS        string
+	DamageServiceURL string
 }
 
 func LoadConfig() *Config {
@@ -22,10 +23,11 @@ func LoadConfig() *Config {
 	}
 
 	config := &Config{
-		SepoliaRPC: getEnv("SEPOLIA_RPC", "https://sepolia.infura.io/v3/YOUR_PROJECT_ID"),
-		Port:       getEnv("PORT", "8080"),
-		ChainID:    11155111, // Sepolia Chain ID
-		SepoliaWS:  getEnv("SEPOLIA_WS", "wss://eth-sepolia.g.alchemy.com/v2/"+filepath.Base(getEnv("SEPOLIA_RPC", "YOUR_PROJECT_ID"))),
+		SepoliaRPC:       getEnv("SEPOLIA_RPC", "https://sepolia.infura.io/v3/YOUR_PROJECT_ID"),
+		Port:             getEnv("PORT", "8080"),
+		ChainID:          11155111, // Sepolia Chain ID
+		SepoliaWS:        getEnv("SEPOLIA_WS", "wss://eth-sepolia.g.alchemy.com/v2/"+filepath.Base(getEnv("SEPOLIA_RPC", "YOUR_PROJECT_ID"))),
+		DamageServiceURL: getEnv("DAMAGE_SERVICE_URL", "http://localhost:8100/contract-broken"),
 	}
 
 	return config
