@@ -123,7 +123,7 @@ env:
           key: sepolia-ws
     # URL del servicio de daños (mqtt-order-event-client)
     - name: DAMAGE_SERVICE_URL
-      value: "http://mqtt-order-event-client.medilogistic.svc.cluster.local:8080/contract-broken"
+      value: "http://mqtt-order-event-client-microservice.medilogistic.svc.cluster.local:8080/contract-broken"
 
 # ============================================================================
 # CONFIGURACIÓN DE BLOCKCHAIN

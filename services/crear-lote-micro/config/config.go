@@ -30,6 +30,11 @@ func LoadConfig() *Config {
 		DamageServiceURL: getEnv("DAMAGE_SERVICE_URL", "http://localhost:8100/contract-broken"),
 	}
 
+	log.Printf("Configuration loaded: SepoliaRPC=%s, Port=%s, ChainID=%d, SepoliaWS=%s, DamageServiceURL=%s",
+		config.SepoliaRPC, config.Port, config.ChainID, config.SepoliaWS, config.DamageServiceURL)
+
+	
+
 	return config
 }
 
